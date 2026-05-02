@@ -16,7 +16,9 @@ export function AlbumsList() {
   const [albums, setAlbums] = useState<UserAlbum[]>([]);
 
   useEffect(() => {
-    queueMicrotask(() => setAlbums(userAlbumService.getAlbums()));
+    queueMicrotask(() => {
+      userAlbumService.getAlbumsAsync().then(setAlbums);
+    });
   }, []);
 
   return (

@@ -29,6 +29,9 @@ export default function Home() {
           <Button asChild variant="outline">
             <Link href="/albums">Ver meus álbuns</Link>
           </Button>
+          <Button asChild variant="outline">
+            <Link href="/auth">Entrar / migrar</Link>
+          </Button>
         </div>
       </section>
 
