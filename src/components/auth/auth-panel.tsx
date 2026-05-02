@@ -84,7 +84,7 @@ export function AuthPanel({ firstScreen = false }: { firstScreen?: boolean }) {
     <main className="mx-auto grid min-h-dvh w-full max-w-6xl gap-8 px-5 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
       <section className="space-y-6">
         <div>
-          <p className="text-sm font-semibold text-emerald-400">{t.appName}</p>
+          <p className="cup-kicker">{t.appName}</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-normal sm:text-6xl">
             {t.loginTitle}
           </h1>
@@ -100,7 +100,8 @@ export function AuthPanel({ firstScreen = false }: { firstScreen?: boolean }) {
       </section>
 
       <section className="grid gap-5">
-      <Card className="rounded-3xl border-emerald-500/20 bg-card/85">
+      <Card className="cup-panel overflow-hidden rounded-2xl">
+        <div className="stadium-stripe h-1.5" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Trophy className="size-5 text-yellow-300" />
@@ -153,7 +154,7 @@ export function AuthPanel({ firstScreen = false }: { firstScreen?: boolean }) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl bg-card/70">
+      <Card className="cup-card rounded-2xl">
         <CardHeader>
           <CardTitle>{t.localMigrationTitle}</CardTitle>
         </CardHeader>
@@ -223,7 +224,7 @@ function formatMessage(template: string, values: Record<string, number | string>
 
 function HeroStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="cup-metric rounded-xl p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-2xl font-semibold">{value}</p>
     </div>

@@ -27,7 +27,7 @@ export function AlbumsList() {
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-6 px-5 py-8 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-emerald-500">{t.localControl}</p>
+          <p className="cup-kicker">{t.localControl}</p>
           <h1 className="text-3xl font-semibold tracking-normal">{t.myAlbums}</h1>
           <p className="mt-2 text-muted-foreground">
             {t.albumsSubtitle}
@@ -42,7 +42,7 @@ export function AlbumsList() {
       </div>
 
       {albums.length === 0 ? (
-        <Card className="rounded-2xl">
+        <Card className="cup-panel rounded-2xl">
           <CardContent className="grid gap-4 py-8">
             <p className="text-muted-foreground">
               {t.noAlbumsYet}
@@ -64,7 +64,7 @@ export function AlbumsList() {
             );
 
             return (
-              <Card className="rounded-2xl" key={album.id}>
+              <Card className="cup-card rounded-2xl" key={album.id}>
                 <CardHeader>
                   <CardTitle>{album.nickname}</CardTitle>
                 </CardHeader>

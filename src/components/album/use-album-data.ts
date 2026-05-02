@@ -9,6 +9,8 @@ import type { UserAlbum } from "@/types/album";
 import type { AlbumEdition, ChecklistSection, Collection } from "@/types/collection";
 import type { OfficialSticker, UserSticker } from "@/types/sticker";
 
+const albumLoadTimeoutMs = 8000;
+
 export function useAlbumData(userAlbumId: string) {
   const [album, setAlbum] = useState<UserAlbum>();
   const [edition, setEdition] = useState<AlbumEdition>();
@@ -17,37 +19,57 @@ export function useAlbumData(userAlbumId: string) {
   const [stickers, setStickers] = useState<OfficialSticker[]>([]);
   const [userStickers, setUserStickers] = useState<UserSticker[]>([]);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string>();
 
   const refresh = useCallback(async () => {
-    const [nextAlbum, nextUserStickers] = await Promise.all([
-      userAlbumService.getAlbumAsync(userAlbumId),
-      userAlbumService.getUserStickersAsync(userAlbumId),
-    ]);
+    try {
+      setError(undefined);
 
-    setAlbum(nextAlbum);
-    setUserStickers(nextUserStickers);
+      const [nextAlbum, nextUserStickers] = await withTimeout(
+        Promise.all([
+          userAlbumService.getAlbumAsync(userAlbumId),
+          userAlbumService.getUserStickersAsync(userAlbumId),
+        ]),
+        albumLoadTimeoutMs,
+      );
 
-    if (nextAlbum) {
-      const [nextEdition, nextCollection, nextSections, nextStickers] =
-        await Promise.all([
-          collectionService.getEditionAsync(nextAlbum.albumEditionId),
-          collectionService.getCollectionAsync(nextAlbum.collectionId),
-          collectionService.getSectionsAsync(nextAlbum.checklistVariantId),
-          collectionService.getStickersAsync(nextAlbum.checklistVariantId),
-        ]);
+      setAlbum(nextAlbum);
+      setUserStickers(nextUserStickers);
 
-      setEdition(nextEdition);
-      setCollection(nextCollection);
-      setSections(nextSections);
-      setStickers(nextStickers);
-    } else {
+      if (nextAlbum) {
+        const [nextEdition, nextCollection, nextSections, nextStickers] =
+          await withTimeout(
+            Promise.all([
+              collectionService.getEditionAsync(nextAlbum.albumEditionId),
+              collectionService.getCollectionAsync(nextAlbum.collectionId),
+              collectionService.getSectionsAsync(nextAlbum.checklistVariantId),
+              collectionService.getStickersAsync(nextAlbum.checklistVariantId),
+            ]),
+            albumLoadTimeoutMs,
+          );
+
+        setEdition(nextEdition);
+        setCollection(nextCollection);
+        setSections(nextSections);
+        setStickers(nextStickers);
+      } else {
+        setEdition(undefined);
+        setCollection(undefined);
+        setSections([]);
+        setStickers([]);
+      }
+    } catch (loadError) {
+      console.error("Could not load album data.", loadError);
+      setAlbum(undefined);
       setEdition(undefined);
       setCollection(undefined);
       setSections([]);
       setStickers([]);
+      setUserStickers([]);
+      setError(loadError instanceof Error ? loadError.message : "Album load failed.");
+    } finally {
+      setReady(true);
     }
-
-    setReady(true);
   }, [userAlbumId]);
 
   useEffect(() => {
@@ -79,6 +101,7 @@ export function useAlbumData(userAlbumId: string) {
 
   return {
     ready,
+    error,
     album,
     edition,
     collection,
@@ -91,4 +114,16 @@ export function useAlbumData(userAlbumId: string) {
     decrement,
     refresh,
   };
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      window.setTimeout(
+        () => reject(new Error("Album data request timed out.")),
+        timeoutMs,
+      );
+    }),
+  ]);
 }

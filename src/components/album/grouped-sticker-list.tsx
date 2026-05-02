@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { AlbumNotFound } from "@/components/album/empty-state";
+import { AlbumLoading, AlbumNotFound } from "@/components/album/empty-state";
 import { useAlbumData } from "@/components/album/use-album-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export function GroupedStickerList({ mode, userAlbumId }: GroupedStickerListProp
   const { t } = useLocale();
   const [copyStatus, setCopyStatus] = useState("");
 
-  if (!ready) return null;
+  if (!ready) return <AlbumLoading />;
   if (!album) return <AlbumNotFound />;
 
   const isMissing = mode === "missing";
@@ -87,7 +87,7 @@ export function GroupedStickerList({ mode, userAlbumId }: GroupedStickerListProp
       </div>
 
       {visibleStickers.length === 0 ? (
-        <Card className="rounded-2xl">
+        <Card className="cup-card rounded-2xl">
           <CardContent className="py-6 text-muted-foreground">
             {isMissing ? t.noMissing : t.noDuplicates}
           </CardContent>
@@ -103,7 +103,7 @@ export function GroupedStickerList({ mode, userAlbumId }: GroupedStickerListProp
             <section className="grid gap-2" key={section.id}>
               <h2 className="text-xl font-semibold">{section.name}</h2>
               {sectionStickers.map((sticker) => (
-                <Card className="rounded-2xl" key={sticker.id}>
+                <Card className="sticker-card rounded-2xl" key={sticker.id}>
                   <CardContent className="flex items-center justify-between gap-3 py-3">
                     <div>
                       <div className="flex flex-wrap gap-2">

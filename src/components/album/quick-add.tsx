@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
-import { AlbumNotFound } from "@/components/album/empty-state";
+import { AlbumLoading, AlbumNotFound } from "@/components/album/empty-state";
 import { StickerQuantityControls } from "@/components/album/sticker-quantity-controls";
 import { useAlbumData } from "@/components/album/use-album-data";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +48,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
-  if (!ready) return null;
+  if (!ready) return <AlbumLoading />;
   if (!album) return <AlbumNotFound />;
 
   return (
@@ -63,7 +63,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
         </Button>
       </div>
 
-      <Card className="rounded-2xl">
+      <Card className="cup-panel rounded-2xl">
         <CardContent className="grid gap-4 py-5">
           <Input
             className="h-14 text-lg"
@@ -79,7 +79,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
           />
 
           {selected ? (
-            <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4">
+            <div className="rounded-xl border border-yellow-300/50 bg-yellow-300/10 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <Badge>{selected.displayCode}</Badge>
@@ -104,7 +104,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
             <div className="grid gap-2">
               {matches.slice(1).map((sticker) => (
                 <button
-                  className="rounded-xl border border-border p-3 text-left hover:border-emerald-500"
+                  className="cup-card rounded-xl p-3 text-left hover:border-yellow-300"
                   key={sticker.id}
                   onClick={() => addSticker(sticker)}
                   type="button"
@@ -124,7 +124,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
           <p className="text-sm text-muted-foreground">{t.nothingMarkedSession}</p>
         ) : (
           recent.map((sticker) => (
-            <Card className="rounded-2xl" key={sticker.id}>
+            <Card className="cup-card rounded-2xl" key={sticker.id}>
               <CardContent className="flex items-center justify-between gap-3 py-3">
                 <div>
                   <Badge>{sticker.displayCode}</Badge>

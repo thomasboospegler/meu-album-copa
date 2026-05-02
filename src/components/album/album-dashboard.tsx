@@ -4,7 +4,7 @@ import Link from "next/link";
 import { BookOpen, Gauge, List, Repeat2, Search, Zap } from "lucide-react";
 
 import { AlbumNavigation } from "@/components/album/album-navigation";
-import { AlbumNotFound } from "@/components/album/empty-state";
+import { AlbumLoading, AlbumNotFound } from "@/components/album/empty-state";
 import { useAlbumData } from "@/components/album/use-album-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
     { href: "quick-add", label: t.quickAdd, icon: Zap },
   ];
 
-  if (!ready) {
-    return null;
-  }
+  if (!ready) return <AlbumLoading />;
 
   if (!album || !collection || !edition) {
     return <AlbumNotFound />;
@@ -40,7 +38,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-5 py-8 sm:px-6">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="bg-emerald-500 text-white">{t.physicalPanini}</Badge>
+          <Badge className="cup-kicker border-0">{t.physicalPanini}</Badge>
           <Badge variant="outline">{edition.country}</Badge>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -56,14 +54,15 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
         </div>
       </div>
 
-      <Card className="rounded-2xl">
+      <Card className="cup-panel overflow-hidden rounded-2xl">
+        <div className="stadium-stripe h-1.5" />
         <CardContent className="grid gap-5 py-5">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-sm text-muted-foreground">{t.uniqueProgress}</p>
               <p className="text-4xl font-semibold">{progress.completionPercentage}%</p>
             </div>
-            <Gauge className="size-10 text-emerald-500" />
+            <Gauge className="size-10 text-yellow-300" />
           </div>
           <Progress className="h-3" value={progress.completionPercentage} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -81,7 +80,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
 
       <section className="grid gap-3 sm:grid-cols-5">
         {actions.map((action) => (
-          <Button asChild className="h-11 justify-start" key={action.href} variant="outline">
+          <Button asChild className="h-11 justify-start border-white/15 bg-white/5" key={action.href} variant="outline">
             <Link href={`/albums/${userAlbumId}/${action.href}`}>
               <action.icon />
               {action.label}
@@ -90,7 +89,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
         ))}
       </section>
 
-      <Card className="rounded-2xl">
+      <Card className="cup-card rounded-2xl">
         <CardHeader>
           <CardTitle>{t.sectionProgress}</CardTitle>
         </CardHeader>
@@ -116,7 +115,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-xl bg-muted p-3">
+    <div className="cup-metric rounded-xl p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-xl font-semibold">{value}</p>
     </div>

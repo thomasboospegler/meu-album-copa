@@ -79,9 +79,18 @@ export const userAlbumService = {
       const localStickers = this.getUserStickers(userAlbumId);
       const supabaseStickers = await supabaseUserAlbumService.getUserStickers(userAlbumId);
 
-      return supabaseStickers && supabaseStickers.length > 0
-        ? supabaseStickers
-        : localStickers;
+      if (!supabaseStickers || supabaseStickers.length === 0) {
+        return localStickers;
+      }
+
+      const mergedStickers = new Map(
+        localStickers.map((sticker) => [sticker.officialStickerId, sticker]),
+      );
+      supabaseStickers.forEach((sticker) => {
+        mergedStickers.set(sticker.officialStickerId, sticker);
+      });
+
+      return Array.from(mergedStickers.values());
     } catch {
       return this.getUserStickers(userAlbumId);
     }

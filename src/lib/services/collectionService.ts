@@ -176,9 +176,11 @@ export const collectionService = {
     try {
       const supabaseStickers =
         await supabaseCatalogService.getOfficialStickers(checklistVariantId);
-      return supabaseStickers && supabaseStickers.length > 0
+      const localStickers = this.getStickers(checklistVariantId);
+
+      return supabaseStickers && supabaseStickers.length >= localStickers.length
         ? supabaseStickers
-        : this.getStickers(checklistVariantId);
+        : localStickers;
     } catch {
       return this.getStickers(checklistVariantId);
     }

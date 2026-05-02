@@ -378,3 +378,141 @@ on conflict (checklist_variant_id, official_number) do update set
   role = excluded.role,
   page_number = excluded.page_number,
   sort_order = excluded.sort_order;
+
+-- Validacao de desenvolvimento em 2026-05-02:
+-- o album fisico visto em Bolivia tem 20 espacos por selecao. Este bloco
+-- normaliza o seed sample para 10 Golden Ballers + 20 figurinhas por time.
+-- Mantem ids existentes, entao user_stickers continuam apontando para as mesmas
+-- figurinhas quando o seed for reexecutado.
+with variants(checklist_variant_id) as (
+  values
+    ('fwc-2026-bo-es-sample'),
+    ('fwc-2026-br-pt-sample'),
+    ('fwc-2026-cl-es-sample'),
+    ('fwc-2026-intl-sample')
+)
+update public.official_stickers
+set
+  official_number = official_number + 10000,
+  sort_order = sort_order + 10000
+where checklist_variant_id in (select checklist_variant_id from variants);
+
+with variants(checklist_variant_id) as (
+  values
+    ('fwc-2026-bo-es-sample'),
+    ('fwc-2026-br-pt-sample'),
+    ('fwc-2026-cl-es-sample'),
+    ('fwc-2026-intl-sample')
+),
+section_seed(name, code, section_type, sort_order, page_start, page_end) as (
+  values
+    ('Golden Ballers', 'GB', 'special', 1, 4, 7),
+    ('Argentina', 'ARG', 'team', 2, 12, 15),
+    ('Brazil', 'BRA', 'team', 3, 20, 23),
+    ('France', 'FRA', 'team', 4, 28, 31),
+    ('Germany', 'GER', 'team', 5, 36, 39),
+    ('Japan', 'JPN', 'team', 6, 44, 47),
+    ('Mexico', 'MEX', 'team', 7, 52, 55)
+),
+generated_stickers as (
+  select
+    section_seed.code as section_code,
+    case
+      when section_seed.code = 'GB' then slot.slot_index
+      else 11 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
+    end as official_number,
+    section_seed.code || lpad(slot.slot_index::text, 2, '0') as display_code,
+    case
+      when section_seed.code = 'GB' then 'Golden Baller ' || lpad(slot.slot_index::text, 2, '0')
+      when slot.slot_index = 1 then 'Escudo ' || section_seed.name
+      when slot.slot_index = 2 then 'Foto de equipe ' || section_seed.name
+      when slot.slot_index = 3 then 'Goleiro ' || section_seed.name
+      when slot.slot_index in (4, 5) then 'Defensor ' || (slot.slot_index - 3)::text || ' ' || section_seed.name
+      when slot.slot_index = 6 then 'Lateral direito ' || section_seed.name
+      when slot.slot_index = 7 then 'Lateral esquerdo ' || section_seed.name
+      when slot.slot_index in (8, 9) then 'Volante ' || (slot.slot_index - 7)::text || ' ' || section_seed.name
+      when slot.slot_index between 10 and 12 then 'Meio-campista ' || (slot.slot_index - 9)::text || ' ' || section_seed.name
+      when slot.slot_index = 13 then 'Ponta direita ' || section_seed.name
+      when slot.slot_index = 14 then 'Ponta esquerda ' || section_seed.name
+      when slot.slot_index in (15, 16) then 'Atacante ' || (slot.slot_index - 14)::text || ' ' || section_seed.name
+      when slot.slot_index = 17 then 'Craque ' || section_seed.name
+      when slot.slot_index = 18 then 'Lenda ' || section_seed.name
+      when slot.slot_index = 19 then 'Torcida ' || section_seed.name
+      else 'Estadio ' || section_seed.name
+    end as name,
+    case when section_seed.section_type = 'team' then section_seed.code else null end as country_code,
+    case when section_seed.section_type = 'team' then section_seed.name else null end as team_name,
+    case
+      when section_seed.code = 'GB' then 'golden-baller'
+      when slot.slot_index <= 2 then 'special'
+      else 'normal'
+    end as sticker_type,
+    case
+      when section_seed.code = 'GB' then 'rare'
+      when slot.slot_index <= 2 then 'foil'
+      else 'base'
+    end as rarity_type,
+    case
+      when slot.slot_index = 1 then 'Escudo'
+      when slot.slot_index = 2 then 'Equipe'
+      when slot.slot_index = 19 then 'Torcida'
+      when slot.slot_index = 20 then 'Estadio'
+      when section_seed.code = 'GB' then 'Especial'
+      else 'Jogador'
+    end as role,
+    section_seed.page_start +
+      floor((slot.slot_index - 1)::numeric / case when section_seed.code = 'GB' then 3 else 5 end)::integer
+      as page_number,
+    case
+      when section_seed.code = 'GB' then slot.slot_index
+      else 11 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
+    end as sort_order
+  from section_seed
+  cross join lateral generate_series(
+    1,
+    case when section_seed.code = 'GB' then 10 else 20 end
+  ) as slot(slot_index)
+)
+insert into public.official_stickers (
+  id,
+  checklist_variant_id,
+  section_id,
+  official_number,
+  display_code,
+  name,
+  country_code,
+  team_name,
+  sticker_type,
+  rarity_type,
+  role,
+  page_number,
+  sort_order
+)
+select
+  variants.checklist_variant_id || '-' || generated_stickers.display_code,
+  variants.checklist_variant_id,
+  variants.checklist_variant_id || '-' || lower(generated_stickers.section_code),
+  generated_stickers.official_number,
+  generated_stickers.display_code,
+  generated_stickers.name,
+  generated_stickers.country_code,
+  generated_stickers.team_name,
+  generated_stickers.sticker_type,
+  generated_stickers.rarity_type,
+  generated_stickers.role,
+  generated_stickers.page_number,
+  generated_stickers.sort_order
+from variants
+cross join generated_stickers
+on conflict (id) do update set
+  official_number = excluded.official_number,
+  section_id = excluded.section_id,
+  display_code = excluded.display_code,
+  name = excluded.name,
+  country_code = excluded.country_code,
+  team_name = excluded.team_name,
+  sticker_type = excluded.sticker_type,
+  rarity_type = excluded.rarity_type,
+  role = excluded.role,
+  page_number = excluded.page_number,
+  sort_order = excluded.sort_order;

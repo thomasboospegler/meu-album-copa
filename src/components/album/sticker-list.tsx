@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-import { AlbumNotFound } from "@/components/album/empty-state";
+import { AlbumLoading, AlbumNotFound } from "@/components/album/empty-state";
 import { StickerQuantityControls } from "@/components/album/sticker-quantity-controls";
 import { useAlbumData } from "@/components/album/use-album-data";
 import { Badge } from "@/components/ui/badge";
@@ -56,13 +56,13 @@ export function StickerList({ userAlbumId }: { userAlbumId: string }) {
     });
   }, [query, sectionFilter, sections, statusFilter, stickers, typeFilter, userStickerMap]);
 
-  if (!ready) return null;
+  if (!ready) return <AlbumLoading />;
   if (!album) return <AlbumNotFound />;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-5 px-5 py-8 sm:px-6">
       <PageHeader title={t.stickerList} userAlbumId={userAlbumId} />
-      <Card className="rounded-2xl">
+      <Card className="cup-panel rounded-2xl">
         <CardContent className="grid gap-3 py-4 sm:grid-cols-2 lg:grid-cols-4">
           <Input
             className="h-10"
@@ -98,7 +98,11 @@ export function StickerList({ userAlbumId }: { userAlbumId: string }) {
           const userSticker = userStickerMap.get(sticker.id);
           const quantity = userSticker?.quantity ?? 0;
           return (
-            <Card className="rounded-2xl" key={sticker.id}>
+            <Card
+              className="sticker-card rounded-2xl"
+              data-collected={hasSticker(userSticker)}
+              key={sticker.id}
+            >
               <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">

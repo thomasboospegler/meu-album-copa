@@ -59,6 +59,11 @@ export const messages = {
     collectedSpecials: "Especiais coletadas",
     sectionProgress: "Progresso por seção",
     digitalAlbum: "Álbum digital",
+    albumPageHint: "Troque de página e toque no espaço da figurinha para marcar.",
+    previousPages: "Páginas anteriores",
+    nextPages: "Próximas páginas",
+    emptyPage: "Página sem figurinhas neste checklist.",
+    stickerSlot: "Espaço da figurinha",
     stickerList: "Lista geral",
     quickAdd: "Marcação rápida",
     stickers: "Figurinhas",
@@ -113,6 +118,7 @@ export const messages = {
     migrationComplete:
       "Migração concluída: {migratedAlbums}/{sourceAlbums} álbuns e {migratedStickers}/{sourceStickers} figurinhas.",
     migrationError: "Erro ao migrar.",
+    loadingAlbum: "Carregando álbum",
     albumNotFound: "Álbum não encontrado",
     createOrChooseAlbum: "Crie ou escolha um álbum físico",
     albumNotFoundSubtitle:
@@ -167,6 +173,11 @@ export const messages = {
     collectedSpecials: "Especiales coleccionadas",
     sectionProgress: "Progreso por sección",
     digitalAlbum: "Álbum digital",
+    albumPageHint: "Cambia de página y toca el espacio de la figurita para marcar.",
+    previousPages: "Páginas anteriores",
+    nextPages: "Próximas páginas",
+    emptyPage: "Página sin figuritas en este checklist.",
+    stickerSlot: "Espacio de la figurita",
     stickerList: "Lista general",
     quickAdd: "Marcación rápida",
     stickers: "Figuritas",
@@ -221,6 +232,7 @@ export const messages = {
     migrationComplete:
       "Migración completada: {migratedAlbums}/{sourceAlbums} álbumes y {migratedStickers}/{sourceStickers} figuritas.",
     migrationError: "Error al migrar.",
+    loadingAlbum: "Cargando álbum",
     albumNotFound: "Álbum no encontrado",
     createOrChooseAlbum: "Crea o elige un álbum físico",
     albumNotFoundSubtitle:
@@ -275,6 +287,11 @@ export const messages = {
     collectedSpecials: "Specials collected",
     sectionProgress: "Section progress",
     digitalAlbum: "Digital album",
+    albumPageHint: "Flip pages and tap the sticker slot to mark it.",
+    previousPages: "Previous pages",
+    nextPages: "Next pages",
+    emptyPage: "Page without stickers in this checklist.",
+    stickerSlot: "Sticker slot",
     stickerList: "Sticker list",
     quickAdd: "Quick add",
     stickers: "Stickers",
@@ -329,6 +346,7 @@ export const messages = {
     migrationComplete:
       "Migration complete: {migratedAlbums}/{sourceAlbums} albums and {migratedStickers}/{sourceStickers} stickers.",
     migrationError: "Migration error.",
+    loadingAlbum: "Loading album",
     albumNotFound: "Album not found",
     createOrChooseAlbum: "Create or choose a physical album",
     albumNotFoundSubtitle:

@@ -69,10 +69,10 @@ export function OnboardingFlow() {
   if (checkedAuth && !authenticated) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col justify-center gap-5 px-5 py-8 sm:px-6">
-        <Badge className="w-fit bg-emerald-500 text-white">
+        <Badge className="cup-kicker border-0">
           {t.appName}
         </Badge>
-        <Card className="rounded-3xl border-emerald-500/20 bg-card/80">
+        <Card className="cup-panel rounded-2xl">
           <CardContent className="grid gap-4 py-8">
             <Lock className="size-9 text-emerald-400" />
             <h1 className="text-3xl font-semibold tracking-normal">
@@ -94,7 +94,7 @@ export function OnboardingFlow() {
     <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col gap-8 px-5 py-8 sm:px-6">
       <section className="grid gap-6 py-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
         <div className="space-y-4">
-          <Badge className="w-fit bg-emerald-500 text-white">
+          <Badge className="cup-kicker border-0">
             {t.appName}
           </Badge>
           <h1 className="max-w-3xl text-4xl font-semibold tracking-normal sm:text-6xl">
@@ -114,7 +114,7 @@ export function OnboardingFlow() {
       <section className="flex flex-wrap gap-2">
         {featuredCountries.map((availableCountry) => (
           <button
-            className="rounded-full border border-white/10 px-4 py-2 text-sm transition hover:border-emerald-400 data-[active=true]:border-emerald-400 data-[active=true]:bg-emerald-400/15"
+            className="cup-card rounded-full px-4 py-2 text-sm transition hover:border-yellow-300 data-[active=true]:border-yellow-300 data-[active=true]:bg-yellow-300/15"
             data-active={country === availableCountry}
             key={availableCountry}
             onClick={() => {
@@ -135,7 +135,7 @@ export function OnboardingFlow() {
 
           return (
             <button
-              className="group rounded-3xl border border-white/10 bg-card/80 p-4 text-left transition hover:-translate-y-1 hover:border-emerald-400 data-[selected=true]:border-emerald-400 data-[selected=true]:bg-emerald-400/10"
+              className="cup-card group rounded-2xl p-4 text-left transition hover:-translate-y-1 hover:border-yellow-300"
               data-selected={selected}
               key={edition.id}
               onClick={() => setAlbumEditionId(edition.id)}
@@ -151,7 +151,7 @@ export function OnboardingFlow() {
                         {edition.productName}
                       </p>
                     </div>
-                    {selected ? <CheckCircle2 className="size-5 text-emerald-400" /> : null}
+                    {selected ? <CheckCircle2 className="size-5 text-yellow-300" /> : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">{edition.country}</Badge>
@@ -172,7 +172,7 @@ export function OnboardingFlow() {
         })}
       </section>
 
-      <Card className="rounded-3xl bg-card/85">
+      <Card className="cup-panel rounded-2xl">
         <CardContent className="grid gap-4 py-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <EditionDetail label={t.product} value={selectedEdition?.productName ?? "-"} />
@@ -224,8 +224,8 @@ function StickerPack({
     <div
       className={`relative mx-auto aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br ${themeClass} p-3 shadow-2xl shadow-black/30 ${size === "large" ? "w-56 sm:w-72" : "w-28"}`}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.8),transparent_25%),radial-gradient(circle_at_80%_80%,rgba(0,0,0,0.24),transparent_35%)]" />
-      <div className="relative flex h-full flex-col justify-between rounded-xl border border-white/50 bg-black/20 p-3 text-white">
+      <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.65)_0_18%,transparent_18%_42%,rgba(0,0,0,0.2)_42%_100%),linear-gradient(90deg,rgba(255,255,255,0.18)_1px,transparent_1px)] bg-[length:100%_100%,34px_34px]" />
+      <div className="relative flex h-full flex-col justify-between rounded-xl border border-white/55 bg-black/20 p-3 text-white">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em]">World Cup</p>
           <p className={`${size === "large" ? "text-3xl" : "text-lg"} font-black leading-none`}>
@@ -233,7 +233,9 @@ function StickerPack({
           </p>
         </div>
         <div className="grid place-items-center">
-          <div className={`${size === "large" ? "size-24" : "size-12"} rounded-full border-4 border-white/80 bg-white/20`} />
+          <div className={`${size === "large" ? "size-24" : "size-12"} grid place-items-center rounded-full border-4 border-white/80 bg-white/20`}>
+            <div className={`${size === "large" ? "size-10" : "size-5"} rounded-full bg-white/30`} />
+          </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.18em]">{countryCode}</p>

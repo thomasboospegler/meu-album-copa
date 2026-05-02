@@ -27,79 +27,38 @@ const teamNames: Record<string, string[]> = {
     "Golden Baller 09",
     "Golden Baller 10",
   ],
-  ARG: [
-    "Escudo Argentina",
-    "Foto de equipe Argentina",
-    "Goleiro Argentina",
-    "Defensor Argentina",
-    "Lateral Argentina",
-    "Volante Argentina",
-    "Meio-campista Argentina",
-    "Atacante Argentina",
-    "Craque Argentina",
-    "Torcida Argentina",
-  ],
-  BRA: [
-    "Escudo Brazil",
-    "Foto de equipe Brazil",
-    "Goleiro Brazil",
-    "Defensor Brazil",
-    "Lateral Brazil",
-    "Volante Brazil",
-    "Meio-campista Brazil",
-    "Atacante Brazil",
-    "Craque Brazil",
-    "Torcida Brazil",
-  ],
-  FRA: [
-    "Escudo France",
-    "Foto de equipe France",
-    "Goleiro France",
-    "Defensor France",
-    "Lateral France",
-    "Volante France",
-    "Meio-campista France",
-    "Atacante France",
-    "Craque France",
-    "Torcida France",
-  ],
-  GER: [
-    "Escudo Germany",
-    "Foto de equipe Germany",
-    "Goleiro Germany",
-    "Defensor Germany",
-    "Lateral Germany",
-    "Volante Germany",
-    "Meio-campista Germany",
-    "Atacante Germany",
-    "Craque Germany",
-    "Torcida Germany",
-  ],
-  JPN: [
-    "Escudo Japan",
-    "Foto de equipe Japan",
-    "Goleiro Japan",
-    "Defensor Japan",
-    "Lateral Japan",
-    "Volante Japan",
-    "Meio-campista Japan",
-    "Atacante Japan",
-    "Craque Japan",
-    "Torcida Japan",
-  ],
-  MEX: [
-    "Escudo Mexico",
-    "Foto de equipe Mexico",
-    "Goleiro Mexico",
-    "Defensor Mexico",
-    "Lateral Mexico",
-    "Volante Mexico",
-    "Meio-campista Mexico",
-    "Atacante Mexico",
-    "Craque Mexico",
-    "Torcida Mexico",
-  ],
+  ARG: makeTeamNames("Argentina"),
+  BRA: makeTeamNames("Brazil"),
+  FRA: makeTeamNames("France"),
+  GER: makeTeamNames("Germany"),
+  JPN: makeTeamNames("Japan"),
+  MEX: makeTeamNames("Mexico"),
 };
+
+function makeTeamNames(teamName: string) {
+  return [
+    `Escudo ${teamName}`,
+    `Foto de equipe ${teamName}`,
+    `Goleiro ${teamName}`,
+    `Defensor 1 ${teamName}`,
+    `Defensor 2 ${teamName}`,
+    `Lateral direito ${teamName}`,
+    `Lateral esquerdo ${teamName}`,
+    `Volante 1 ${teamName}`,
+    `Volante 2 ${teamName}`,
+    `Meio-campista 1 ${teamName}`,
+    `Meio-campista 2 ${teamName}`,
+    `Meio-campista 3 ${teamName}`,
+    `Ponta direita ${teamName}`,
+    `Ponta esquerda ${teamName}`,
+    `Atacante 1 ${teamName}`,
+    `Atacante 2 ${teamName}`,
+    `Craque ${teamName}`,
+    `Lenda ${teamName}`,
+    `Torcida ${teamName}`,
+    `Estádio ${teamName}`,
+  ];
+}
 
 export const checklistSections: ChecklistSection[] = sectionsSeed.map(
   (section, index) => ({
@@ -118,7 +77,10 @@ export const officialStickers: OfficialSticker[] = checklistSections.flatMap(
   (section, sectionIndex) => {
     const names = teamNames[section.code];
     return names.map((name, stickerIndex) => {
-      const officialNumber = sectionIndex * 10 + stickerIndex + 1;
+      const officialNumber =
+        section.code === "GB"
+          ? stickerIndex + 1
+          : 11 + (sectionIndex - 1) * 20 + stickerIndex;
       const isGolden = section.code === "GB";
       const isSpecial = isGolden || stickerIndex < 2;
       const stickerType: StickerType = isGolden
@@ -143,10 +105,19 @@ export const officialStickers: OfficialSticker[] = checklistSections.flatMap(
         teamName: section.sectionType === "team" ? section.name : undefined,
         stickerType,
         rarityType,
-        role: stickerIndex === 0 ? "Escudo" : stickerIndex === 1 ? "Equipe" : "Jogador",
-        pageNumber: section.pageStart + Math.floor(stickerIndex / 3),
+        role: getRole(stickerIndex),
+        pageNumber:
+          section.pageStart + Math.floor(stickerIndex / (section.code === "GB" ? 3 : 5)),
         sortOrder: officialNumber,
       };
     });
   },
 );
+
+function getRole(stickerIndex: number) {
+  if (stickerIndex === 0) return "Escudo";
+  if (stickerIndex === 1) return "Equipe";
+  if (stickerIndex === 18) return "Torcida";
+  if (stickerIndex === 19) return "Estádio";
+  return "Jogador";
+}
