@@ -76,8 +76,12 @@ export const userAlbumService = {
   },
   async getUserStickersAsync(userAlbumId: string) {
     try {
-      return (await supabaseUserAlbumService.getUserStickers(userAlbumId)) ??
-        this.getUserStickers(userAlbumId);
+      const localStickers = this.getUserStickers(userAlbumId);
+      const supabaseStickers = await supabaseUserAlbumService.getUserStickers(userAlbumId);
+
+      return supabaseStickers && supabaseStickers.length > 0
+        ? supabaseStickers
+        : localStickers;
     } catch {
       return this.getUserStickers(userAlbumId);
     }

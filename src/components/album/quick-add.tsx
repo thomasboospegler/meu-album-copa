@@ -10,11 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useLocale } from "@/lib/i18n";
 import type { OfficialSticker } from "@/types/sticker";
 
 export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
   const { ready, album, stickers, userStickerMap, increment, decrement } =
     useAlbumData(userAlbumId);
+  const { t } = useLocale();
   const [query, setQuery] = useState("");
   const [recent, setRecent] = useState<OfficialSticker[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -53,13 +55,11 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
     <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-5 px-5 py-8 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-semibold tracking-normal">Marcação rápida</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Digite o número oficial ou código e marque com velocidade.
-          </p>
+          <h1 className="text-3xl font-semibold tracking-normal">{t.quickAdd}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t.quickAddHint}</p>
         </div>
         <Button asChild variant="outline">
-          <Link href={`/albums/${userAlbumId}`}>Dashboard</Link>
+          <Link href={`/albums/${userAlbumId}`}>{t.dashboard}</Link>
         </Button>
       </div>
 
@@ -73,7 +73,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
                 addSticker(selected);
               }
             }}
-            placeholder="Ex.: 12, ARG03, BRA10..."
+            placeholder={t.quickAddPlaceholder}
             ref={inputRef}
             value={query}
           />
@@ -85,7 +85,8 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
                   <Badge>{selected.displayCode}</Badge>
                   <p className="mt-2 text-lg font-semibold">{selected.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Nº {selected.officialNumber} · {selected.teamName ?? selected.stickerType}
+                    {t.officialNumberShort} {selected.officialNumber} ·{" "}
+                    {selected.teamName ?? selected.stickerType}
                   </p>
                 </div>
                 <StickerQuantityControls
@@ -96,7 +97,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
               </div>
             </div>
           ) : query ? (
-            <p className="text-sm text-muted-foreground">Nenhuma figurinha encontrada.</p>
+            <p className="text-sm text-muted-foreground">{t.noStickerFound}</p>
           ) : null}
 
           {matches.length > 1 ? (
@@ -118,9 +119,9 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
       </Card>
 
       <section className="grid gap-2">
-        <h2 className="text-xl font-semibold">Últimas adicionadas</h2>
+        <h2 className="text-xl font-semibold">{t.lastAdded}</h2>
         {recent.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nada marcado nesta sessão ainda.</p>
+          <p className="text-sm text-muted-foreground">{t.nothingMarkedSession}</p>
         ) : (
           recent.map((sticker) => (
             <Card className="rounded-2xl" key={sticker.id}>
@@ -130,7 +131,7 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
                   <p className="mt-2 font-medium">{sticker.name}</p>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  qtd. {userStickerMap.get(sticker.id)?.quantity ?? 0}
+                  {t.quantityShort} {userStickerMap.get(sticker.id)?.quantity ?? 0}
                 </span>
               </CardContent>
             </Card>

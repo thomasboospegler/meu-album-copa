@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import { AlbumNotFound } from "@/components/album/empty-state";
 import { useAlbumData } from "@/components/album/use-album-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLocale } from "@/lib/i18n";
 import { getDuplicateQuantity } from "@/lib/utils/progress";
 
 type GroupedStickerListProps = {
@@ -16,6 +18,8 @@ type GroupedStickerListProps = {
 
 export function GroupedStickerList({ mode, userAlbumId }: GroupedStickerListProps) {
   const { ready, album, sections, stickers, userStickerMap } = useAlbumData(userAlbumId);
+  const { t } = useLocale();
+  const [copyStatus, setCopyStatus] = useState("");
 
   if (!ready) return null;
   if (!album) return <AlbumNotFound />;
@@ -37,46 +41,55 @@ export function GroupedStickerList({ mode, userAlbumId }: GroupedStickerListProp
           const duplicates = getDuplicateQuantity(userStickerMap.get(sticker.id));
           return isMissing
             ? `${sticker.displayCode} - ${sticker.name}`
-            : `${sticker.displayCode} - ${sticker.name} (${duplicates} repetida(s))`;
+            : `${sticker.displayCode} - ${sticker.name} (${duplicates} ${t.duplicateBadge})`;
         }),
       ].join("\n");
     })
     .filter(Boolean)
     .join("\n\n");
 
+  async function copyList() {
+    try {
+      await navigator.clipboard.writeText(copyText);
+      setCopyStatus(isMissing ? t.copiedMissing : t.copiedTrade);
+    } catch {
+      setCopyStatus(t.copyFailed);
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-5 px-5 py-8 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold tracking-normal">
-            {isMissing ? "Faltantes" : "Repetidas"}
+            {isMissing ? t.missing : t.duplicates}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {isMissing
-              ? "Figurinhas com quantity = 0, agrupadas por seção."
-              : "Figurinhas com quantity > 1 para troca."}
+            {isMissing ? t.missingDescription : t.duplicatesDescription}
           </p>
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => navigator.clipboard.writeText(copyText)}
+            disabled={!copyText}
+            onClick={copyList}
             type="button"
             variant="outline"
           >
-            {isMissing ? "Copiar faltantes" : "Copiar troca"}
+            {isMissing ? t.copyMissing : t.copyTrade}
           </Button>
           <Button asChild variant="outline">
-            <Link href={`/albums/${userAlbumId}`}>Dashboard</Link>
+            <Link href={`/albums/${userAlbumId}`}>{t.dashboard}</Link>
           </Button>
         </div>
+        {copyStatus ? (
+          <p className="basis-full text-sm text-muted-foreground">{copyStatus}</p>
+        ) : null}
       </div>
 
       {visibleStickers.length === 0 ? (
         <Card className="rounded-2xl">
           <CardContent className="py-6 text-muted-foreground">
-            {isMissing
-              ? "Nenhuma faltante no checklist mockado."
-              : "Nenhuma repetida cadastrada ainda."}
+            {isMissing ? t.noMissing : t.noDuplicates}
           </CardContent>
         </Card>
       ) : (
@@ -97,12 +110,14 @@ export function GroupedStickerList({ mode, userAlbumId }: GroupedStickerListProp
                         <Badge>{sticker.displayCode}</Badge>
                         {!isMissing ? (
                           <Badge variant="secondary">
-                            {getDuplicateQuantity(userStickerMap.get(sticker.id))} para troca
+                            {getDuplicateQuantity(userStickerMap.get(sticker.id))} {t.forTrade}
                           </Badge>
                         ) : null}
                       </div>
                       <p className="mt-2 font-medium">{sticker.name}</p>
-                      <p className="text-sm text-muted-foreground">Nº {sticker.officialNumber}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {t.officialNumberShort} {sticker.officialNumber}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

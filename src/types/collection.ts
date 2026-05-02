@@ -20,6 +20,10 @@ export type AlbumEdition = {
   productName: string;
   productUrl: string;
   checklistVariantId: string;
+  isEnabled?: boolean;
+  marketLabel?: string;
+  packTheme?: "bolivia" | "brazil" | "chile" | "international";
+  availabilityNote?: string;
 };
 
 export type ChecklistVariant = {

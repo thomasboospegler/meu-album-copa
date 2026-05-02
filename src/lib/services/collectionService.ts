@@ -13,7 +13,10 @@ type EditionFilters = {
   language?: string;
   coverType?: string;
   coverVariant?: string;
+  includeDisabled?: boolean;
 };
+
+type EditionFilterOptionKey = Exclude<keyof EditionFilters, "includeDisabled">;
 
 export const collectionService = {
   getCollections() {
@@ -41,6 +44,7 @@ export const collectionService = {
     return paniniWorldCup2026Editions.filter(
       (edition) =>
         edition.collectionId === collectionId &&
+        (normalizedFilters.includeDisabled || edition.isEnabled !== false) &&
         (!normalizedFilters.country || edition.country === normalizedFilters.country) &&
         (!normalizedFilters.language || edition.language === normalizedFilters.language) &&
         (!normalizedFilters.coverType || edition.coverType === normalizedFilters.coverType) &&
@@ -69,7 +73,10 @@ export const collectionService = {
     return Array.from(
       new Set(
         paniniWorldCup2026Editions
-          .filter((edition) => edition.collectionId === collectionId)
+          .filter(
+            (edition) =>
+              edition.collectionId === collectionId && edition.isEnabled !== false,
+          )
           .map((edition) => edition.country),
       ),
     );
@@ -79,10 +86,11 @@ export const collectionService = {
   },
   getEditionFilterOptions(collectionId: string, filters: EditionFilters = {}) {
     const editions = paniniWorldCup2026Editions.filter(
-      (edition) => edition.collectionId === collectionId,
+      (edition) =>
+        edition.collectionId === collectionId && edition.isEnabled !== false,
     );
 
-    const scoped = (key: keyof EditionFilters) =>
+    const scoped = (key: EditionFilterOptionKey) =>
       editions
         .filter((edition) => {
           if (key !== "country" && filters.country && edition.country !== filters.country) {
@@ -130,16 +138,22 @@ export const collectionService = {
     const importedChecklist =
       checklistImportService.getImportedChecklist(checklistVariantId);
 
-    return (importedChecklist?.sections ?? checklistSections)
+    if (importedChecklist) {
+      return importedChecklist.sections
+        .filter((section) => section.checklistVariantId === checklistVariantId)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+
+    return getLocalSectionsForVariant(checklistVariantId)
       .filter((section) => section.checklistVariantId === checklistVariantId)
       .sort((a, b) => a.sortOrder - b.sortOrder);
   },
   async getSectionsAsync(checklistVariantId: string) {
     try {
-      return (
-        (await supabaseCatalogService.getSections(checklistVariantId)) ??
-        this.getSections(checklistVariantId)
-      );
+      const supabaseSections = await supabaseCatalogService.getSections(checklistVariantId);
+      return supabaseSections && supabaseSections.length > 0
+        ? supabaseSections
+        : this.getSections(checklistVariantId);
     } catch {
       return this.getSections(checklistVariantId);
     }
@@ -148,21 +162,71 @@ export const collectionService = {
     const importedChecklist =
       checklistImportService.getImportedChecklist(checklistVariantId);
 
-    return (importedChecklist?.stickers ?? officialStickers)
+    if (importedChecklist) {
+      return importedChecklist.stickers
+        .filter((sticker) => sticker.checklistVariantId === checklistVariantId)
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+    }
+
+    return getLocalStickersForVariant(checklistVariantId)
       .filter((sticker) => sticker.checklistVariantId === checklistVariantId)
       .sort((a, b) => a.sortOrder - b.sortOrder);
   },
   async getStickersAsync(checklistVariantId: string) {
     try {
-      return (
-        (await supabaseCatalogService.getOfficialStickers(checklistVariantId)) ??
-        this.getStickers(checklistVariantId)
-      );
+      const supabaseStickers =
+        await supabaseCatalogService.getOfficialStickers(checklistVariantId);
+      return supabaseStickers && supabaseStickers.length > 0
+        ? supabaseStickers
+        : this.getStickers(checklistVariantId);
     } catch {
       return this.getStickers(checklistVariantId);
     }
   },
   getSticker(officialStickerId: string) {
-    return officialStickers.find((sticker) => sticker.id === officialStickerId);
+    const directSticker = officialStickers.find(
+      (sticker) => sticker.id === officialStickerId,
+    );
+
+    if (directSticker) {
+      return directSticker;
+    }
+
+    return checklistVariants
+      .flatMap((variant) => getLocalStickersForVariant(variant.id))
+      .find((sticker) => sticker.id === officialStickerId);
   },
 };
+
+function getLocalSectionsForVariant(checklistVariantId: string) {
+  const directSections = checklistSections.filter(
+    (section) => section.checklistVariantId === checklistVariantId,
+  );
+
+  if (directSections.length > 0) {
+    return directSections;
+  }
+
+  return checklistSections.map((section) => ({
+    ...section,
+    id: `${checklistVariantId}-${section.code.toLowerCase()}`,
+    checklistVariantId,
+  }));
+}
+
+function getLocalStickersForVariant(checklistVariantId: string) {
+  const directStickers = officialStickers.filter(
+    (sticker) => sticker.checklistVariantId === checklistVariantId,
+  );
+
+  if (directStickers.length > 0) {
+    return directStickers;
+  }
+
+  return officialStickers.map((sticker) => ({
+    ...sticker,
+    id: `${checklistVariantId}-${sticker.displayCode}`,
+    checklistVariantId,
+    sectionId: `${checklistVariantId}-${sticker.displayCode.replace(/\d+$/, "").toLowerCase()}`,
+  }));
+}

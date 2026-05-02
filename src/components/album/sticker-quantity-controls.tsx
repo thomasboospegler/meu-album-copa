@@ -3,6 +3,7 @@
 import { Minus, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useLocale } from "@/lib/i18n";
 
 type StickerQuantityControlsProps = {
   quantity: number;
@@ -15,10 +16,12 @@ export function StickerQuantityControls({
   onIncrement,
   onDecrement,
 }: StickerQuantityControlsProps) {
+  const { t } = useLocale();
+
   return (
     <div className="flex items-center gap-1">
       <Button
-        aria-label="Diminuir quantidade"
+        aria-label={t.decreaseQuantity}
         onClick={(event) => {
           event.stopPropagation();
           onDecrement();
@@ -33,7 +36,7 @@ export function StickerQuantityControls({
         {quantity}
       </span>
       <Button
-        aria-label="Aumentar quantidade"
+        aria-label={t.increaseQuantity}
         onClick={(event) => {
           event.stopPropagation();
           onIncrement();

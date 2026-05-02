@@ -17,11 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocale } from "@/lib/i18n";
 import { getDuplicateQuantity, hasSticker } from "@/lib/utils/progress";
 
 export function StickerList({ userAlbumId }: { userAlbumId: string }) {
   const { ready, album, sections, stickers, userStickerMap, increment, decrement } =
     useAlbumData(userAlbumId);
+  const { t } = useLocale();
   const [query, setQuery] = useState("");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -59,34 +61,34 @@ export function StickerList({ userAlbumId }: { userAlbumId: string }) {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-5 px-5 py-8 sm:px-6">
-      <PageHeader title="Lista geral" userAlbumId={userAlbumId} />
+      <PageHeader title={t.stickerList} userAlbumId={userAlbumId} />
       <Card className="rounded-2xl">
         <CardContent className="grid gap-3 py-4 sm:grid-cols-2 lg:grid-cols-4">
           <Input
             className="h-10"
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar número, código, nome, seleção..."
+            placeholder={t.searchPlaceholder}
             value={query}
           />
-          <FilterSelect label="Seção" onChange={setSectionFilter} value={sectionFilter}>
-            <SelectItem value="all">Todas as seções</SelectItem>
+          <FilterSelect label={t.section} onChange={setSectionFilter} value={sectionFilter}>
+            <SelectItem value="all">{t.allSections}</SelectItem>
             {sections.map((section) => (
               <SelectItem key={section.id} value={section.id}>
                 {section.name}
               </SelectItem>
             ))}
           </FilterSelect>
-          <FilterSelect label="Status" onChange={setStatusFilter} value={statusFilter}>
-            <SelectItem value="all">Todas</SelectItem>
-            <SelectItem value="owned">Tenho</SelectItem>
-            <SelectItem value="missing">Faltam</SelectItem>
-            <SelectItem value="duplicates">Repetidas</SelectItem>
+          <FilterSelect label={t.status} onChange={setStatusFilter} value={statusFilter}>
+            <SelectItem value="all">{t.all}</SelectItem>
+            <SelectItem value="owned">{t.owned}</SelectItem>
+            <SelectItem value="missing">{t.missingShort}</SelectItem>
+            <SelectItem value="duplicates">{t.duplicates}</SelectItem>
           </FilterSelect>
-          <FilterSelect label="Tipo" onChange={setTypeFilter} value={typeFilter}>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            <SelectItem value="normal">Normal</SelectItem>
-            <SelectItem value="special">Special</SelectItem>
-            <SelectItem value="golden-baller">Golden Baller</SelectItem>
+          <FilterSelect label={t.type} onChange={setTypeFilter} value={typeFilter}>
+            <SelectItem value="all">{t.allTypes}</SelectItem>
+            <SelectItem value="normal">{t.normal}</SelectItem>
+            <SelectItem value="special">{t.special}</SelectItem>
+            <SelectItem value="golden-baller">{t.goldenBaller}</SelectItem>
           </FilterSelect>
         </CardContent>
       </Card>
@@ -102,17 +104,18 @@ export function StickerList({ userAlbumId }: { userAlbumId: string }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>{sticker.displayCode}</Badge>
                     <Badge variant={hasSticker(userSticker) ? "secondary" : "outline"}>
-                      {hasSticker(userSticker) ? "tenho" : "falta"}
+                      {hasSticker(userSticker) ? t.ownedBadge : t.missingBadge}
                     </Badge>
                     {getDuplicateQuantity(userSticker) > 0 ? (
                       <Badge variant="secondary">
-                        {getDuplicateQuantity(userSticker)} repetida(s)
+                        {getDuplicateQuantity(userSticker)} {t.duplicateBadge}
                       </Badge>
                     ) : null}
                   </div>
                   <p className="mt-2 font-medium">{sticker.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Nº {sticker.officialNumber} · {sticker.teamName ?? sticker.stickerType}
+                    {t.officialNumberShort} {sticker.officialNumber} ·{" "}
+                    {sticker.teamName ?? sticker.stickerType}
                   </p>
                 </div>
                 <StickerQuantityControls
@@ -151,16 +154,16 @@ function FilterSelect({
 }
 
 function PageHeader({ title, userAlbumId }: { title: string; userAlbumId: string }) {
+  const { t } = useLocale();
+
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <h1 className="text-3xl font-semibold tracking-normal">{title}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Busque e ajuste quantidades sem sair da lista.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t.searchAndAdjust}</p>
       </div>
       <Button asChild variant="outline">
-        <Link href={`/albums/${userAlbumId}`}>Dashboard</Link>
+        <Link href={`/albums/${userAlbumId}`}>{t.dashboard}</Link>
       </Button>
     </div>
   );

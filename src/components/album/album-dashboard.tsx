@@ -10,22 +10,23 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useLocale } from "@/lib/i18n";
 
 type AlbumDashboardProps = {
   userAlbumId: string;
 };
 
-const actions = [
-  { href: "digital", label: "Álbum digital", icon: BookOpen },
-  { href: "stickers", label: "Lista geral", icon: List },
-  { href: "missing", label: "Faltantes", icon: Search },
-  { href: "duplicates", label: "Repetidas", icon: Repeat2 },
-  { href: "quick-add", label: "Marcação rápida", icon: Zap },
-];
-
 export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
   const { ready, album, collection, edition, progress, sectionProgress } =
     useAlbumData(userAlbumId);
+  const { t } = useLocale();
+  const actions = [
+    { href: "digital", label: t.digitalAlbum, icon: BookOpen },
+    { href: "stickers", label: t.stickerList, icon: List },
+    { href: "missing", label: t.missing, icon: Search },
+    { href: "duplicates", label: t.duplicates, icon: Repeat2 },
+    { href: "quick-add", label: t.quickAdd, icon: Zap },
+  ];
 
   if (!ready) {
     return null;
@@ -39,7 +40,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col gap-6 px-5 py-8 sm:px-6">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="bg-emerald-500 text-white">Físico Panini</Badge>
+          <Badge className="bg-emerald-500 text-white">{t.physicalPanini}</Badge>
           <Badge variant="outline">{edition.country}</Badge>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -50,7 +51,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
             <p className="mt-2 text-muted-foreground">{edition.editionName}</p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/albums">Meus álbuns</Link>
+            <Link href="/albums">{t.myAlbums}</Link>
           </Button>
         </div>
       </div>
@@ -59,21 +60,21 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
         <CardContent className="grid gap-5 py-5">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-sm text-muted-foreground">Progresso único</p>
+              <p className="text-sm text-muted-foreground">{t.uniqueProgress}</p>
               <p className="text-4xl font-semibold">{progress.completionPercentage}%</p>
             </div>
             <Gauge className="size-10 text-emerald-500" />
           </div>
           <Progress className="h-3" value={progress.completionPercentage} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-            <Metric label="Total" value={collection.totalStickers} />
-            <Metric label="No mock" value={progress.totalStickers} />
-            <Metric label="Tenho" value={progress.collectedUnique} />
-            <Metric label="Faltam" value={progress.missing} />
-            <Metric label="Repetidas" value={progress.duplicates} />
+            <Metric label={t.officialTotal} value={collection.totalStickers} />
+            <Metric label={t.inChecklist} value={progress.totalStickers} />
+            <Metric label={t.owned} value={progress.collectedUnique} />
+            <Metric label={t.missingShort} value={progress.missing} />
+            <Metric label={t.duplicates} value={progress.duplicates} />
           </div>
           <p className="text-sm text-muted-foreground">
-            Especiais coletadas: {progress.specialCollected}
+            {t.collectedSpecials}: {progress.specialCollected}
           </p>
         </CardContent>
       </Card>
@@ -91,7 +92,7 @@ export function AlbumDashboard({ userAlbumId }: AlbumDashboardProps) {
 
       <Card className="rounded-2xl">
         <CardHeader>
-          <CardTitle>Progresso por seção</CardTitle>
+          <CardTitle>{t.sectionProgress}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           {sectionProgress.map((section) => (

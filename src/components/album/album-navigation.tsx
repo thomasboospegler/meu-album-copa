@@ -1,20 +1,22 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-
-const albumSections = [
-  { href: "digital", label: "Digital" },
-  { href: "stickers", label: "Figurinhas" },
-  { href: "missing", label: "Faltantes" },
-  { href: "duplicates", label: "Repetidas" },
-  { href: "quick-add", label: "Adição rápida" },
-];
+import { useLocale } from "@/lib/i18n";
 
 type AlbumNavigationProps = {
   userAlbumId: string;
 };
 
 export function AlbumNavigation({ userAlbumId }: AlbumNavigationProps) {
+  const { t } = useLocale();
+  const albumSections = [
+    { href: "digital", label: t.digitalAlbum },
+    { href: "stickers", label: t.stickers },
+    { href: "missing", label: t.missing },
+    { href: "duplicates", label: t.duplicates },
+    { href: "quick-add", label: t.quickAddNav },
+  ];
+
   return (
     <nav className="flex flex-wrap gap-3">
       {albumSections.map((section) => (

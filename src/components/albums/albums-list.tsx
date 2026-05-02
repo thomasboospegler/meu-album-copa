@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { collectionService } from "@/lib/services/collectionService";
+import { useLocale } from "@/lib/i18n";
 import { stickerProgressService } from "@/lib/services/stickerProgressService";
 import { userAlbumService } from "@/lib/services/userAlbumService";
 import type { UserAlbum } from "@/types/album";
 
 export function AlbumsList() {
+  const { t } = useLocale();
   const [albums, setAlbums] = useState<UserAlbum[]>([]);
 
   useEffect(() => {
@@ -25,16 +27,16 @@ export function AlbumsList() {
     <main className="mx-auto flex min-h-dvh w-full max-w-5xl flex-col gap-6 px-5 py-8 sm:px-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold text-emerald-500">Controle local</p>
-          <h1 className="text-3xl font-semibold tracking-normal">Meus álbuns</h1>
+          <p className="text-sm font-semibold text-emerald-500">{t.localControl}</p>
+          <h1 className="text-3xl font-semibold tracking-normal">{t.myAlbums}</h1>
           <p className="mt-2 text-muted-foreground">
-            Álbuns físicos cadastrados neste navegador.
+            {t.albumsSubtitle}
           </p>
         </div>
         <Button asChild>
           <Link href="/onboarding">
             <Plus />
-            Novo álbum
+            {t.newAlbum}
           </Link>
         </Button>
       </div>
@@ -43,10 +45,10 @@ export function AlbumsList() {
         <Card className="rounded-2xl">
           <CardContent className="grid gap-4 py-8">
             <p className="text-muted-foreground">
-              Nenhum álbum criado ainda. Comece escolhendo uma edição física Panini.
+              {t.noAlbumsYet}
             </p>
             <Button asChild className="w-fit">
-              <Link href="/onboarding">Adicionar álbum físico</Link>
+              <Link href="/onboarding">{t.addPhysicalAlbum}</Link>
             </Button>
           </CardContent>
         </Card>
@@ -71,12 +73,16 @@ export function AlbumsList() {
                     <span>{collection?.name}</span>
                     <span>{edition?.editionName}</span>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">{progress.completionPercentage}% completo</Badge>
-                      <Badge variant="outline">{progress.duplicates} repetidas</Badge>
+                      <Badge variant="secondary">
+                        {progress.completionPercentage}% {t.complete}
+                      </Badge>
+                      <Badge variant="outline">
+                        {progress.duplicates} {t.duplicates.toLowerCase()}
+                      </Badge>
                     </div>
                   </div>
                   <Button asChild variant="outline">
-                    <Link href={`/albums/${album.id}`}>Abrir</Link>
+                    <Link href={`/albums/${album.id}`}>{t.open}</Link>
                   </Button>
                 </CardContent>
               </Card>

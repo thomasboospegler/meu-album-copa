@@ -1,267 +1,246 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Album, CheckCircle2, Info } from "lucide-react";
+import { CheckCircle2, Lock, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { collectionService } from "@/lib/services/collectionService";
 import { userAlbumService } from "@/lib/services/userAlbumService";
+import { authService } from "@/lib/services/authService";
+import { useLocale } from "@/lib/i18n";
+import type { AlbumEdition } from "@/types/collection";
 
 export function OnboardingFlow() {
   const router = useRouter();
+  const { t } = useLocale();
   const collections = collectionService.getCollections();
-  const [collectionId, setCollectionId] = useState(collections[0]?.id ?? "");
-  const [country, setCountry] = useState("Chile");
-  const [language, setLanguage] = useState("all");
-  const [coverType, setCoverType] = useState("all");
-  const [coverVariant, setCoverVariant] = useState("all");
-  const filters = useMemo(
-    () => ({
-      country: country === "all" ? undefined : country,
-      language: language === "all" ? undefined : language,
-      coverType: coverType === "all" ? undefined : coverType,
-      coverVariant: coverVariant === "all" ? undefined : coverVariant,
-    }),
-    [country, coverType, coverVariant, language],
+  const collectionId = collections[0]?.id ?? "";
+  const featuredCountries = useMemo(
+    () => collectionService.getCountries(collectionId),
+    [collectionId],
   );
-  const filterOptions = collectionService.getEditionFilterOptions(
-    collectionId,
-    filters,
-  );
-  const editions = useMemo(
-    () => collectionService.getEditions(collectionId, filters),
-    [collectionId, filters],
-  );
-  const [albumEditionId, setAlbumEditionId] = useState(editions[0]?.id ?? "");
+  const [country, setCountry] = useState("Bolívia");
+  const [albumEditionId, setAlbumEditionId] = useState("");
   const [nickname, setNickname] = useState("");
-  const selectedEdition = editions.find((edition) => edition.id === albumEditionId);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checkedAuth, setCheckedAuth] = useState(false);
+
+  useEffect(() => {
+    authService.getSession().then((session) => {
+      setAuthenticated(Boolean(session));
+      setCheckedAuth(true);
+    });
+  }, []);
+
+  const editions = useMemo(
+    () =>
+      collectionService.getEditions(collectionId, {
+        country: country === "all" ? undefined : country,
+      }),
+    [collectionId, country],
+  );
+  const selectedEdition =
+    editions.find((edition) => edition.id === albumEditionId) ?? editions[0];
   const selectedCollection = collectionService.getCollection(collectionId);
   const selectedChecklist = selectedEdition
     ? collectionService.getChecklistVariant(selectedEdition.checklistVariantId)
     : undefined;
-  const plannedMarkets = collectionService.getPlannedMarkets();
 
-  const canStart = Boolean(collectionId && selectedEdition);
+  useEffect(() => {
+    if (!albumEditionId && selectedEdition) {
+      queueMicrotask(() => setAlbumEditionId(selectedEdition.id));
+    }
+  }, [albumEditionId, selectedEdition]);
 
   async function startAlbum() {
-    if (!canStart) {
+    if (!selectedEdition || !authenticated) {
       return;
     }
 
-    const album = await userAlbumService.createAlbumAsync(albumEditionId, nickname);
+    const album = await userAlbumService.createAlbumAsync(selectedEdition.id, nickname);
     router.push(`/albums/${album.id}`);
   }
 
+  if (checkedAuth && !authenticated) {
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col justify-center gap-5 px-5 py-8 sm:px-6">
+        <Badge className="w-fit bg-emerald-500 text-white">
+          {t.appName}
+        </Badge>
+        <Card className="rounded-3xl border-emerald-500/20 bg-card/80">
+          <CardContent className="grid gap-4 py-8">
+            <Lock className="size-9 text-emerald-400" />
+            <h1 className="text-3xl font-semibold tracking-normal">
+              {t.accountRequired}
+            </h1>
+            <p className="text-muted-foreground">
+              {t.loginSubtitle}
+            </p>
+            <Button asChild className="w-fit">
+              <Link href="/">{t.signIn}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
+
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-6 px-5 py-8 sm:px-6">
-      <div className="space-y-3">
-        <p className="text-sm font-semibold text-emerald-500">Meu Álbum Copa</p>
-        <h1 className="text-3xl font-semibold tracking-normal sm:text-4xl">
-          Configure seu álbum físico
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Escolha a coleção, região e versão física para carregar o checklist
-          correspondente. Esta versão usa um checklist mockado de desenvolvimento.
-        </p>
-      </div>
+    <main className="mx-auto flex min-h-dvh w-full max-w-7xl flex-col gap-8 px-5 py-8 sm:px-6">
+      <section className="grid gap-6 py-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+        <div className="space-y-4">
+          <Badge className="w-fit bg-emerald-500 text-white">
+            {t.appName}
+          </Badge>
+          <h1 className="max-w-3xl text-4xl font-semibold tracking-normal sm:text-6xl">
+            {t.albumSetup}
+          </h1>
+          <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
+            {t.albumSetupSubtitle}
+          </p>
+        </div>
+        {selectedEdition ? (
+          <div className="justify-self-center lg:justify-self-end">
+            <StickerPack edition={selectedEdition} size="large" />
+          </div>
+        ) : null}
+      </section>
 
-      <Card className="rounded-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Album className="size-5 text-emerald-500" />
-            Primeira configuração
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-5">
-          <label className="grid gap-2">
-            <span className="text-sm font-medium">Coleção</span>
-            <Select value={collectionId} onValueChange={setCollectionId}>
-              <SelectTrigger className="h-11 w-full">
-                <SelectValue placeholder="Selecione a coleção" />
-              </SelectTrigger>
-              <SelectContent>
-                {collections.map((collection) => (
-                  <SelectItem key={collection.id} value={collection.id}>
-                    {collection.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
+      <section className="flex flex-wrap gap-2">
+        {featuredCountries.map((availableCountry) => (
+          <button
+            className="rounded-full border border-white/10 px-4 py-2 text-sm transition hover:border-emerald-400 data-[active=true]:border-emerald-400 data-[active=true]:bg-emerald-400/15"
+            data-active={country === availableCountry}
+            key={availableCountry}
+            onClick={() => {
+              setCountry(availableCountry);
+              setAlbumEditionId("");
+            }}
+            type="button"
+          >
+            {availableCountry}
+          </button>
+        ))}
+      </section>
 
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {editions.map((edition) => {
+          const selected = selectedEdition?.id === edition.id;
+          const checklist = collectionService.getChecklistVariant(edition.checklistVariantId);
+
+          return (
+            <button
+              className="group rounded-3xl border border-white/10 bg-card/80 p-4 text-left transition hover:-translate-y-1 hover:border-emerald-400 data-[selected=true]:border-emerald-400 data-[selected=true]:bg-emerald-400/10"
+              data-selected={selected}
+              key={edition.id}
+              onClick={() => setAlbumEditionId(edition.id)}
+              type="button"
+            >
+              <div className="grid gap-4 sm:grid-cols-[8rem_1fr]">
+                <StickerPack edition={edition} />
+                <div className="min-w-0 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-lg font-semibold">{edition.editionName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {edition.productName}
+                      </p>
+                    </div>
+                    {selected ? <CheckCircle2 className="size-5 text-emerald-400" /> : null}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">{edition.country}</Badge>
+                    <Badge variant="outline">{edition.language}</Badge>
+                    <Badge variant="outline">{edition.coverType}</Badge>
+                    <Badge variant="outline">{edition.coverVariant}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {checklist?.name ?? edition.checklistVariantId}
+                  </p>
+                  {edition.availabilityNote ? (
+                    <p className="text-sm text-emerald-300">{edition.availabilityNote}</p>
+                  ) : null}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </section>
+
+      <Card className="rounded-3xl bg-card/85">
+        <CardContent className="grid gap-4 py-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <FilterSelect
-              label="País/região"
-              onChange={(value) => {
-                setCountry(value);
-                setAlbumEditionId("");
-              }}
-              options={filterOptions.countries}
-              value={country}
+            <EditionDetail label={t.product} value={selectedEdition?.productName ?? "-"} />
+            <EditionDetail label={t.checklist} value={selectedChecklist?.name ?? "-"} />
+            <EditionDetail
+              label={t.stickers}
+              value={String(selectedChecklist?.totalStickers ?? selectedCollection?.totalStickers ?? "-")}
             />
-            <FilterSelect
-              label="Idioma"
-              onChange={(value) => {
-                setLanguage(value);
-                setAlbumEditionId("");
-              }}
-              options={filterOptions.languages}
-              value={language}
-            />
-            <FilterSelect
-              label="Tipo de capa"
-              onChange={(value) => {
-                setCoverType(value);
-                setAlbumEditionId("");
-              }}
-              options={filterOptions.coverTypes}
-              value={coverType}
-            />
-            <FilterSelect
-              label="Variante da capa"
-              onChange={(value) => {
-                setCoverVariant(value);
-                setAlbumEditionId("");
-              }}
-              options={filterOptions.coverVariants}
-              value={coverVariant}
+            <EditionDetail
+              label={t.pages}
+              value={String(selectedCollection?.totalPages ?? "-")}
             />
           </div>
-
-          <div className="grid gap-3">
-            <span className="text-sm font-medium">Versão física do álbum</span>
-            {editions.length === 0 ? (
-              <p className="rounded-xl bg-muted p-4 text-sm text-muted-foreground">
-                Nenhuma edição cadastrada para estes filtros ainda.
-              </p>
-            ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                {editions.map((edition) => (
-                <button
-                  className="rounded-xl border border-border bg-card p-4 text-left transition hover:border-emerald-500/70 data-[selected=true]:border-emerald-500 data-[selected=true]:bg-emerald-500/10"
-                  data-selected={albumEditionId === edition.id}
-                  key={edition.id}
-                  onClick={() => setAlbumEditionId(edition.id)}
-                  type="button"
-                >
-                  <span className="flex items-start justify-between gap-3">
-                    <span className="font-medium">{edition.editionName}</span>
-                    {albumEditionId === edition.id ? (
-                      <CheckCircle2 className="size-5 text-emerald-500" />
-                    ) : null}
-                  </span>
-                  <span className="mt-2 block text-sm text-muted-foreground">
-                    {edition.coverType} · {edition.coverVariant}
-                  </span>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    Checklist: {edition.checklistVariantId}
-                  </span>
-                </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {selectedEdition ? (
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-              <div className="mb-3 flex items-center gap-2 font-medium">
-                <Info className="size-4 text-emerald-500" />
-                Detalhes da edição selecionada
-              </div>
-              <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-                <EditionDetail label="Produto" value={selectedEdition.productName} />
-                <EditionDetail label="País" value={selectedEdition.country} />
-                <EditionDetail label="Idioma" value={selectedEdition.language} />
-                <EditionDetail label="Tipo de capa" value={selectedEdition.coverType} />
-                <EditionDetail label="Variante" value={selectedEdition.coverVariant} />
-                <EditionDetail
-                  label="Total de figurinhas"
-                  value={String(selectedChecklist?.totalStickers ?? selectedCollection?.totalStickers)}
-                />
-                <EditionDetail
-                  label="Total de páginas"
-                  value={String(selectedCollection?.totalPages ?? "-")}
-                />
-                <EditionDetail
-                  label="Checklist"
-                  value={selectedChecklist?.name ?? selectedEdition.checklistVariantId}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          <div className="rounded-2xl bg-muted p-4">
-            <p className="text-sm font-medium">Países preparados para cadastro</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {plannedMarkets.map((market) => (
-                <span
-                  className="rounded-full bg-background px-3 py-1 text-xs text-muted-foreground"
-                  key={market.country}
-                >
-                  {market.country} · {market.languages.join(", ")}
-                  {market.enabled ? "" : " · em breve"}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <label className="grid gap-2">
-            <span className="text-sm font-medium">Apelido do álbum</span>
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
             <Input
-              className="h-11"
+              className="h-11 min-w-64"
               onChange={(event) => setNickname(event.target.value)}
-              placeholder="Ex.: Copa 2026 capa dura"
+              placeholder={t.nickname}
               value={nickname}
             />
-          </label>
-
-          <Button className="h-11 w-full sm:w-fit" disabled={!canStart} onClick={startAlbum}>
-            Começar meu controle
-          </Button>
+            <Button className="h-11" disabled={!selectedEdition} onClick={startAlbum}>
+              <Sparkles />
+              {t.startTracking}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </main>
   );
 }
 
-function FilterSelect({
-  label,
-  onChange,
-  options,
-  value,
+function StickerPack({
+  edition,
+  size = "default",
 }: {
-  label: string;
-  onChange: (value: string) => void;
-  options: string[];
-  value: string;
+  edition: AlbumEdition;
+  size?: "default" | "large";
 }) {
+  const theme = edition.packTheme ?? "international";
+  const themeClass = {
+    bolivia: "from-emerald-400 via-yellow-300 to-red-500",
+    brazil: "from-yellow-300 via-emerald-400 to-blue-600",
+    chile: "from-blue-600 via-white to-red-500",
+    international: "from-sky-400 via-emerald-300 to-violet-500",
+  }[theme];
+  const countryCode = edition.country.slice(0, 3).toUpperCase();
+
   return (
-    <label className="grid gap-2">
-      <span className="text-sm font-medium">{label}</span>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-11 w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos</SelectItem>
-          {options.map((option) => (
-            <SelectItem key={option} value={option}>
-              {option}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </label>
+    <div
+      className={`relative mx-auto aspect-[3/4] overflow-hidden rounded-2xl bg-gradient-to-br ${themeClass} p-3 shadow-2xl shadow-black/30 ${size === "large" ? "w-56 sm:w-72" : "w-28"}`}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.8),transparent_25%),radial-gradient(circle_at_80%_80%,rgba(0,0,0,0.24),transparent_35%)]" />
+      <div className="relative flex h-full flex-col justify-between rounded-xl border border-white/50 bg-black/20 p-3 text-white">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.2em]">World Cup</p>
+          <p className={`${size === "large" ? "text-3xl" : "text-lg"} font-black leading-none`}>
+            2026
+          </p>
+        </div>
+        <div className="grid place-items-center">
+          <div className={`${size === "large" ? "size-24" : "size-12"} rounded-full border-4 border-white/80 bg-white/20`} />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.18em]">{countryCode}</p>
+          <p className="text-xs font-semibold">{edition.coverType}</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
