@@ -92,9 +92,8 @@ export function AuthPanel({ firstScreen = false }: { firstScreen?: boolean }) {
             {t.loginSubtitle}
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <HeroStat label="Bolivia" value="ES" />
-          <HeroStat label="Brasil" value="PT" />
           <HeroStat label="English" value="EN" />
         </div>
       </section>

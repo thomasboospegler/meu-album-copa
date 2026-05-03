@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLocale } from "@/lib/i18n";
+import { stickerMatchesSearch } from "@/lib/utils/sticker-search";
 import { getDuplicateQuantity, hasSticker } from "@/lib/utils/progress";
 
 export function StickerList({ userAlbumId }: { userAlbumId: string }) {
@@ -30,7 +31,7 @@ export function StickerList({ userAlbumId }: { userAlbumId: string }) {
   const [typeFilter, setTypeFilter] = useState("all");
 
   const filteredStickers = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = query.trim();
 
     return stickers.filter((sticker) => {
       const section = sections.find((item) => item.id === sticker.sectionId);
@@ -38,11 +39,13 @@ export function StickerList({ userAlbumId }: { userAlbumId: string }) {
       const quantity = userSticker?.quantity ?? 0;
       const matchesQuery =
         !normalizedQuery ||
-        sticker.officialNumber.toString().includes(normalizedQuery) ||
-        sticker.displayCode.toLowerCase().includes(normalizedQuery) ||
-        sticker.name.toLowerCase().includes(normalizedQuery) ||
-        sticker.teamName?.toLowerCase().includes(normalizedQuery) ||
-        section?.name.toLowerCase().includes(normalizedQuery);
+        stickerMatchesSearch(normalizedQuery, [
+          sticker.officialNumber,
+          sticker.displayCode,
+          sticker.name,
+          sticker.teamName,
+          section?.name,
+        ]);
       const matchesSection =
         sectionFilter === "all" || sticker.sectionId === sectionFilter;
       const matchesStatus =

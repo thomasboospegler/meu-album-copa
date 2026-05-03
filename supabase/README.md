@@ -11,7 +11,14 @@ The app keeps localStorage fallback behavior when Supabase is not configured or 
 
 The seeded checklist is intentionally partial and temporary. It exists so album progress,
 missing stickers, duplicates, and quick marking can be tested before the official checklist
-is imported.
+is imported. The current sample is aligned with the first Bolivia album photos: it keeps
+Brazil hidden, creates a `FWC` opening section, and creates 20 slots per team section
+using display codes like `MEX 1` through `MEX 20`.
+
+If your database still shows `GB` or only 130 stickers for
+`fwc-2026-bo-es-sample`, rerun the latest `seed.sql`. The app can fall back to the
+new local sample while the remote seed is stale, but Supabase should be reseeded before
+publishing.
 
 When `schema.sql` changes, run it again before `seed.sql`. The script is written to
 add missing columns safely, such as `album_editions.is_enabled`, without recreating

@@ -41,7 +41,7 @@ export const messages = {
     signUpSuccess: "Conta criada. Você já pode escolher seu álbum.",
     albumSetup: "Qual versão física você tem?",
     albumSetupSubtitle:
-      "Escolha olhando o país, idioma, capa e o pacote ilustrativo. Brasil e Bolívia já aparecem como mercados principais.",
+      "Escolha olhando o país, idioma, capa e o pacote ilustrativo. A Bolívia está habilitada como mercado principal inicial.",
     chooseEdition: "Escolha sua versão",
     nickname: "Apelido do álbum",
     startTracking: "Começar meu controle",
@@ -155,7 +155,7 @@ export const messages = {
     signUpSuccess: "Cuenta creada. Ya puedes elegir tu álbum.",
     albumSetup: "¿Qué versión física tienes?",
     albumSetupSubtitle:
-      "Elige mirando país, idioma, tapa y el sobre ilustrativo. Brasil y Bolivia ya aparecen como mercados principales.",
+      "Elige mirando país, idioma, tapa y el sobre ilustrativo. Bolivia está habilitada como mercado principal inicial.",
     chooseEdition: "Elige tu versión",
     nickname: "Nombre del álbum",
     startTracking: "Empezar mi control",
@@ -269,7 +269,7 @@ export const messages = {
     signUpSuccess: "Account created. You can now choose your album.",
     albumSetup: "Which physical edition do you have?",
     albumSetupSubtitle:
-      "Choose by country, language, cover and the illustrated packet. Brazil and Bolivia are primary markets now.",
+      "Choose by country, language, cover and the illustrated packet. Bolivia is enabled as the first main market.",
     chooseEdition: "Choose your edition",
     nickname: "Album nickname",
     startTracking: "Start tracking",

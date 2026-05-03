@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n";
+import { stickerMatchesSearch } from "@/lib/utils/sticker-search";
 import type { OfficialSticker } from "@/types/sticker";
 
 export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
@@ -26,15 +27,18 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
   }, []);
 
   const matches = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = query.trim();
     if (!normalized) return [];
 
     return stickers
       .filter(
         (sticker) =>
-          sticker.officialNumber.toString() === normalized ||
-          sticker.displayCode.toLowerCase().includes(normalized) ||
-          sticker.name.toLowerCase().includes(normalized),
+          stickerMatchesSearch(normalized, [
+            sticker.officialNumber,
+            sticker.displayCode,
+            sticker.name,
+            sticker.teamName,
+          ]),
       )
       .slice(0, 8);
   }, [query, stickers]);

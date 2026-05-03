@@ -162,9 +162,11 @@ export const collectionService = {
   async getSectionsAsync(checklistVariantId: string) {
     try {
       const supabaseSections = await supabaseCatalogService.getSections(checklistVariantId);
-      return supabaseSections && supabaseSections.length > 0
+      const localSections = this.getSections(checklistVariantId);
+
+      return supabaseSections && supabaseSections.length >= localSections.length
         ? supabaseSections
-        : this.getSections(checklistVariantId);
+        : localSections;
     } catch {
       return this.getSections(checklistVariantId);
     }
@@ -235,7 +237,8 @@ function withLocalEditionMetadata(editions: AlbumEdition[]) {
 
     return {
       ...edition,
-      isEnabled: edition.isEnabled ?? localEdition?.isEnabled ?? true,
+      isEnabled:
+        localEdition?.isEnabled === false ? false : (edition.isEnabled ?? true),
       marketLabel: localEdition?.marketLabel,
       packTheme: localEdition?.packTheme,
       availabilityNote: localEdition?.availabilityNote,
@@ -270,8 +273,16 @@ function getLocalStickersForVariant(checklistVariantId: string) {
 
   return officialStickers.map((sticker) => ({
     ...sticker,
-    id: `${checklistVariantId}-${sticker.displayCode}`,
+    id: `${checklistVariantId}-${compactStickerCode(sticker.displayCode)}`,
     checklistVariantId,
-    sectionId: `${checklistVariantId}-${sticker.displayCode.replace(/\d+$/, "").toLowerCase()}`,
+    sectionId: `${checklistVariantId}-${sticker.displayCode.replace(/\s*\d+$/, "").trim().toLowerCase()}`,
   }));
+}
+
+function compactStickerCode(displayCode: string) {
+  const match = displayCode.match(/^([a-z]+)\s*0*(\d+)$/i);
+
+  if (!match) return displayCode.replace(/\s+/g, "");
+
+  return `${match[1].toUpperCase()}${match[2].padStart(2, "0")}`;
 }

@@ -52,8 +52,8 @@ export const checklistVariants: ChecklistVariant[] = [
 ];
 
 export const plannedEditionMarkets: PlannedEditionMarket[] = [
-  { country: "Brasil", languages: ["pt-BR"], enabled: true },
   { country: "Bolívia", languages: ["es-BO"], enabled: true },
+  { country: "Brasil", languages: ["pt-BR"], enabled: false },
   { country: "Chile", languages: ["es-CL"], enabled: false },
   { country: "Argentina", languages: ["es-AR"], enabled: false },
   { country: "México", languages: ["es-MX"], enabled: false },
@@ -102,9 +102,10 @@ export const paniniWorldCup2026Editions: AlbumEdition[] = [
     productName: "FIFA World Cup 2026 - Álbum Brasil",
     productUrl: "https://www.panini.com/",
     checklistVariantId: brazilChecklistVariantId,
+    isEnabled: false,
     marketLabel: "Brasil",
     packTheme: "brazil",
-    availabilityNote: "Edição base para colecionadores no Brasil.",
+    availabilityNote: "Edição preparada para ativação futura.",
   },
   {
     id: "brasil-capa-dura",
@@ -117,9 +118,10 @@ export const paniniWorldCup2026Editions: AlbumEdition[] = [
     productName: "FIFA World Cup 2026 - Álbum Brasil Capa Dura",
     productUrl: "https://www.panini.com/",
     checklistVariantId: brazilChecklistVariantId,
+    isEnabled: false,
     marketLabel: "Brasil",
     packTheme: "brazil",
-    availabilityNote: "Compartilha checklist com a edição brochura do Brasil.",
+    availabilityNote: "Edição preparada para ativação futura.",
   },
   {
     id: "chile-tapa-blanda",

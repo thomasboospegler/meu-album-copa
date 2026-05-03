@@ -130,7 +130,7 @@ insert into public.album_editions (
     'Standard',
     'FIFA World Cup 2026 - Álbum Brasil',
     'https://www.panini.com/',
-    true
+    false
   ),
   (
     'brasil-capa-dura',
@@ -143,7 +143,7 @@ insert into public.album_editions (
     'Colecionador',
     'FIFA World Cup 2026 - Álbum Brasil Capa Dura',
     'https://www.panini.com/',
-    true
+    false
   ),
   (
     'chile-tapa-blanda',
@@ -233,13 +233,15 @@ with variants(checklist_variant_id) as (
 ),
 section_seed(name, code, section_type, sort_order, page_start, page_end) as (
   values
-    ('Golden Ballers', 'GB', 'special', 1, 4, 7),
-    ('Argentina', 'ARG', 'team', 2, 12, 15),
-    ('Brazil', 'BRA', 'team', 3, 20, 23),
-    ('France', 'FRA', 'team', 4, 28, 31),
-    ('Germany', 'GER', 'team', 5, 36, 39),
-    ('Japan', 'JPN', 'team', 6, 44, 47),
-    ('Mexico', 'MEX', 'team', 7, 52, 55)
+    ('FIFA World Cup', 'FWC', 'special', 1, 1, 4),
+    ('Mexico', 'MEX', 'team', 2, 4, 5),
+    ('Tunisia', 'TUN', 'team', 3, 6, 7),
+    ('Belgium', 'BEL', 'team', 4, 8, 9),
+    ('Argentina', 'ARG', 'team', 5, 10, 11),
+    ('Brazil', 'BRA', 'team', 6, 12, 13),
+    ('France', 'FRA', 'team', 7, 14, 15),
+    ('Germany', 'GER', 'team', 8, 16, 17),
+    ('Japan', 'JPN', 'team', 9, 18, 19)
 )
 insert into public.checklist_sections (
   id,
@@ -381,6 +383,7 @@ select
   sticker_seed.sort_order
 from variants
 cross join sticker_seed
+where false
 on conflict (checklist_variant_id, official_number) do update set
   section_id = excluded.section_id,
   display_code = excluded.display_code,
@@ -395,7 +398,7 @@ on conflict (checklist_variant_id, official_number) do update set
 
 -- Validacao de desenvolvimento em 2026-05-02:
 -- o album fisico visto em Bolivia tem 20 espacos por selecao. Este bloco
--- normaliza o seed sample para 10 Golden Ballers + 20 figurinhas por time.
+-- normaliza o seed sample para secoes globais FWC + 20 figurinhas por time.
 -- Mantem ids existentes, entao user_stickers continuam apontando para as mesmas
 -- figurinhas quando o seed for reexecutado.
 with variants(checklist_variant_id) as (
@@ -411,6 +414,24 @@ set
   sort_order = sort_order + 10000
 where checklist_variant_id in (select checklist_variant_id from variants);
 
+delete from public.official_stickers sticker
+using public.checklist_sections section
+where sticker.section_id = section.id
+  and section.code = 'GB'
+  and not exists (
+    select 1
+    from public.user_stickers user_sticker
+    where user_sticker.official_sticker_id = sticker.id
+  );
+
+delete from public.checklist_sections section
+where section.code = 'GB'
+  and not exists (
+    select 1
+    from public.official_stickers sticker
+    where sticker.section_id = section.id
+  );
+
 with variants(checklist_variant_id) as (
   values
     ('fwc-2026-bo-es-sample'),
@@ -420,24 +441,27 @@ with variants(checklist_variant_id) as (
 ),
 section_seed(name, code, section_type, sort_order, page_start, page_end) as (
   values
-    ('Golden Ballers', 'GB', 'special', 1, 4, 7),
-    ('Argentina', 'ARG', 'team', 2, 12, 15),
-    ('Brazil', 'BRA', 'team', 3, 20, 23),
-    ('France', 'FRA', 'team', 4, 28, 31),
-    ('Germany', 'GER', 'team', 5, 36, 39),
-    ('Japan', 'JPN', 'team', 6, 44, 47),
-    ('Mexico', 'MEX', 'team', 7, 52, 55)
+    ('FIFA World Cup', 'FWC', 'special', 1, 1, 4),
+    ('Mexico', 'MEX', 'team', 2, 4, 5),
+    ('Tunisia', 'TUN', 'team', 3, 6, 7),
+    ('Belgium', 'BEL', 'team', 4, 8, 9),
+    ('Argentina', 'ARG', 'team', 5, 10, 11),
+    ('Brazil', 'BRA', 'team', 6, 12, 13),
+    ('France', 'FRA', 'team', 7, 14, 15),
+    ('Germany', 'GER', 'team', 8, 16, 17),
+    ('Japan', 'JPN', 'team', 9, 18, 19)
 ),
 generated_stickers as (
   select
     section_seed.code as section_code,
     case
-      when section_seed.code = 'GB' then slot.slot_index
-      else 11 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
+      when section_seed.code = 'FWC' then slot.slot_index
+      else 21 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
     end as official_number,
-    section_seed.code || lpad(slot.slot_index::text, 2, '0') as display_code,
+    section_seed.code || ' ' || slot.slot_index::text as display_code,
+    section_seed.code || lpad(slot.slot_index::text, 2, '0') as compact_code,
     case
-      when section_seed.code = 'GB' then 'Golden Baller ' || lpad(slot.slot_index::text, 2, '0')
+      when section_seed.code = 'FWC' then 'FIFA World Cup ' || slot.slot_index::text
       when slot.slot_index = 1 then 'Escudo ' || section_seed.name
       when slot.slot_index = 2 then 'Foto de equipe ' || section_seed.name
       when slot.slot_index = 3 then 'Goleiro ' || section_seed.name
@@ -457,12 +481,12 @@ generated_stickers as (
     case when section_seed.section_type = 'team' then section_seed.code else null end as country_code,
     case when section_seed.section_type = 'team' then section_seed.name else null end as team_name,
     case
-      when section_seed.code = 'GB' then 'golden-baller'
+      when section_seed.code = 'FWC' then 'special'
       when slot.slot_index <= 2 then 'special'
       else 'normal'
     end as sticker_type,
     case
-      when section_seed.code = 'GB' then 'rare'
+      when section_seed.code = 'FWC' then 'rare'
       when slot.slot_index <= 2 then 'foil'
       else 'base'
     end as rarity_type,
@@ -471,20 +495,20 @@ generated_stickers as (
       when slot.slot_index = 2 then 'Equipe'
       when slot.slot_index = 19 then 'Torcida'
       when slot.slot_index = 20 then 'Estadio'
-      when section_seed.code = 'GB' then 'Especial'
+      when section_seed.code = 'FWC' then 'Especial'
       else 'Jogador'
     end as role,
     section_seed.page_start +
-      floor((slot.slot_index - 1)::numeric / case when section_seed.code = 'GB' then 3 else 5 end)::integer
+      floor((slot.slot_index - 1)::numeric / case when section_seed.code = 'FWC' then 5 else 10 end)::integer
       as page_number,
     case
-      when section_seed.code = 'GB' then slot.slot_index
-      else 11 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
+      when section_seed.code = 'FWC' then slot.slot_index
+      else 21 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
     end as sort_order
   from section_seed
   cross join lateral generate_series(
     1,
-    case when section_seed.code = 'GB' then 10 else 20 end
+    20
   ) as slot(slot_index)
 )
 insert into public.official_stickers (
@@ -503,7 +527,7 @@ insert into public.official_stickers (
   sort_order
 )
 select
-  variants.checklist_variant_id || '-' || generated_stickers.display_code,
+  variants.checklist_variant_id || '-' || generated_stickers.compact_code,
   variants.checklist_variant_id,
   variants.checklist_variant_id || '-' || lower(generated_stickers.section_code),
   generated_stickers.official_number,
