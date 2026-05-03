@@ -12,3 +12,7 @@ The app keeps localStorage fallback behavior when Supabase is not configured or 
 The seeded checklist is intentionally partial and temporary. It exists so album progress,
 missing stickers, duplicates, and quick marking can be tested before the official checklist
 is imported.
+
+When `schema.sql` changes, run it again before `seed.sql`. The script is written to
+add missing columns safely, such as `album_editions.is_enabled`, without recreating
+existing user progress.

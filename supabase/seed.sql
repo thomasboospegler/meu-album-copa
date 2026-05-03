@@ -1,3 +1,6 @@
+alter table public.album_editions
+  add column if not exists is_enabled boolean not null default true;
+
 insert into public.collections (
   id,
   name,
@@ -87,7 +90,8 @@ insert into public.album_editions (
   cover_type,
   cover_variant,
   product_name,
-  product_url
+  product_url,
+  is_enabled
 ) values
   (
     'bolivia-tapa-blanda',
@@ -99,7 +103,8 @@ insert into public.album_editions (
     'Tapa Blanda',
     'Standard',
     'FIFA World Cup 2026 - Álbum Bolivia',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    true
   ),
   (
     'bolivia-tapa-dura',
@@ -111,7 +116,8 @@ insert into public.album_editions (
     'Tapa Dura',
     'Coleccionista',
     'FIFA World Cup 2026 - Álbum Bolivia Tapa Dura',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    true
   ),
   (
     'brasil-capa-brochura',
@@ -123,7 +129,8 @@ insert into public.album_editions (
     'Capa Brochura',
     'Standard',
     'FIFA World Cup 2026 - Álbum Brasil',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    true
   ),
   (
     'brasil-capa-dura',
@@ -135,7 +142,8 @@ insert into public.album_editions (
     'Capa Dura',
     'Colecionador',
     'FIFA World Cup 2026 - Álbum Brasil Capa Dura',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    true
   ),
   (
     'chile-tapa-blanda',
@@ -147,7 +155,8 @@ insert into public.album_editions (
     'Tapa Blanda',
     'Standard',
     'FIFA World Cup 2026 - Álbum Tapa Blanda',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    false
   ),
   (
     'chile-tapa-dura-gold',
@@ -159,7 +168,8 @@ insert into public.album_editions (
     'Tapa Dura',
     'Gold',
     'FIFA World Cup 2026 - Álbum Tapa Dura Gold',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    false
   ),
   (
     'chile-tapa-dura-silver',
@@ -171,7 +181,8 @@ insert into public.album_editions (
     'Tapa Dura',
     'Silver',
     'FIFA World Cup 2026 - Álbum Tapa Dura Silver',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    false
   ),
   (
     'chile-tapa-dura-color',
@@ -183,7 +194,8 @@ insert into public.album_editions (
     'Tapa Dura',
     'Color',
     'FIFA World Cup 2026 - Álbum Tapa Dura Color',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    false
   ),
   (
     'international-softcover-preview',
@@ -195,7 +207,8 @@ insert into public.album_editions (
     'Softcover',
     'Standard',
     'FIFA World Cup 2026 - International Softcover Preview',
-    'https://www.panini.com/'
+    'https://www.panini.com/',
+    false
   )
 on conflict (id) do update set
   checklist_variant_id = excluded.checklist_variant_id,
@@ -205,7 +218,8 @@ on conflict (id) do update set
   cover_type = excluded.cover_type,
   cover_variant = excluded.cover_variant,
   product_name = excluded.product_name,
-  product_url = excluded.product_url;
+  product_url = excluded.product_url,
+  is_enabled = excluded.is_enabled;
 
 -- Checklist temporario de desenvolvimento.
 -- Substituir pelo checklist oficial importado pela rota /admin/import-checklist

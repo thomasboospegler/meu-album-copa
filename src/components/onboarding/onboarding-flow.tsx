@@ -20,9 +20,12 @@ export function OnboardingFlow() {
   const { t } = useLocale();
   const collections = collectionService.getCollections();
   const collectionId = collections[0]?.id ?? "";
+  const [availableEditions, setAvailableEditions] = useState<AlbumEdition[]>(() =>
+    collectionService.getEditions(collectionId),
+  );
   const featuredCountries = useMemo(
-    () => collectionService.getCountries(collectionId),
-    [collectionId],
+    () => Array.from(new Set(availableEditions.map((edition) => edition.country))),
+    [availableEditions],
   );
   const [country, setCountry] = useState("Bolívia");
   const [albumEditionId, setAlbumEditionId] = useState("");
@@ -37,12 +40,25 @@ export function OnboardingFlow() {
     });
   }, []);
 
+  useEffect(() => {
+    let active = true;
+
+    collectionService.getEditionsAsync(collectionId).then((editions) => {
+      if (!active) return;
+      setAvailableEditions(editions);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [collectionId]);
+
+  const activeCountry = featuredCountries.includes(country)
+    ? country
+    : (featuredCountries[0] ?? country);
   const editions = useMemo(
-    () =>
-      collectionService.getEditions(collectionId, {
-        country: country === "all" ? undefined : country,
-      }),
-    [collectionId, country],
+    () => availableEditions.filter((edition) => edition.country === activeCountry),
+    [activeCountry, availableEditions],
   );
   const selectedEdition =
     editions.find((edition) => edition.id === albumEditionId) ?? editions[0];
@@ -115,7 +131,7 @@ export function OnboardingFlow() {
         {featuredCountries.map((availableCountry) => (
           <button
             className="cup-card rounded-full px-4 py-2 text-sm transition hover:border-yellow-300 data-[active=true]:border-yellow-300 data-[active=true]:bg-yellow-300/15"
-            data-active={country === availableCountry}
+            data-active={activeCountry === availableCountry}
             key={availableCountry}
             onClick={() => {
               setCountry(availableCountry);

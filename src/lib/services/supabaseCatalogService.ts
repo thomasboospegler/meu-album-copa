@@ -29,6 +29,7 @@ type AlbumEditionRow = {
   product_name: string;
   product_url: string;
   checklist_variant_id: string;
+  is_enabled?: boolean | null;
 };
 
 type ChecklistVariantRow = {
@@ -81,7 +82,9 @@ export const supabaseCatalogService = {
     const { data, error } = await supabase
       .from("album_editions")
       .select("*")
-      .eq("collection_id", collectionId);
+      .eq("collection_id", collectionId)
+      .order("country")
+      .order("edition_name");
     if (error) throw error;
     return data.map(mapAlbumEdition);
   },
@@ -147,6 +150,7 @@ function mapAlbumEdition(row: AlbumEditionRow): AlbumEdition {
     productName: row.product_name,
     productUrl: row.product_url,
     checklistVariantId: row.checklist_variant_id,
+    isEnabled: row.is_enabled ?? undefined,
   };
 }
 

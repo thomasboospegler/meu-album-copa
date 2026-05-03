@@ -7,6 +7,7 @@ import {
 } from "@/data/panini-world-cup-2026/editions";
 import { checklistImportService } from "@/lib/services/checklistImportService";
 import { supabaseCatalogService } from "@/lib/services/supabaseCatalogService";
+import type { AlbumEdition } from "@/types/collection";
 
 type EditionFilters = {
   country?: string;
@@ -41,16 +42,26 @@ export const collectionService = {
     const normalizedFilters =
       typeof filters === "string" ? { country: filters } : filters;
 
-    return paniniWorldCup2026Editions.filter(
-      (edition) =>
-        edition.collectionId === collectionId &&
-        (normalizedFilters.includeDisabled || edition.isEnabled !== false) &&
-        (!normalizedFilters.country || edition.country === normalizedFilters.country) &&
-        (!normalizedFilters.language || edition.language === normalizedFilters.language) &&
-        (!normalizedFilters.coverType || edition.coverType === normalizedFilters.coverType) &&
-        (!normalizedFilters.coverVariant ||
-          edition.coverVariant === normalizedFilters.coverVariant),
-    );
+    return filterEditions(paniniWorldCup2026Editions, collectionId, normalizedFilters);
+  },
+  async getEditionsAsync(collectionId: string, filters: EditionFilters | string = {}) {
+    const normalizedFilters =
+      typeof filters === "string" ? { country: filters } : filters;
+
+    try {
+      const supabaseEditions =
+        await supabaseCatalogService.getAlbumEditions(collectionId);
+
+      return supabaseEditions && supabaseEditions.length > 0
+        ? filterEditions(
+            withLocalEditionMetadata(supabaseEditions),
+            collectionId,
+            normalizedFilters,
+          )
+        : this.getEditions(collectionId, normalizedFilters);
+    } catch {
+      return this.getEditions(collectionId, normalizedFilters);
+    }
   },
   getEdition(editionId: string) {
     return paniniWorldCup2026Editions.find((edition) => edition.id === editionId);
@@ -199,6 +210,38 @@ export const collectionService = {
       .find((sticker) => sticker.id === officialStickerId);
   },
 };
+
+function filterEditions(
+  editions: AlbumEdition[],
+  collectionId: string,
+  filters: EditionFilters,
+) {
+  return editions.filter(
+    (edition) =>
+      edition.collectionId === collectionId &&
+      (filters.includeDisabled || edition.isEnabled !== false) &&
+      (!filters.country || edition.country === filters.country) &&
+      (!filters.language || edition.language === filters.language) &&
+      (!filters.coverType || edition.coverType === filters.coverType) &&
+      (!filters.coverVariant || edition.coverVariant === filters.coverVariant),
+  );
+}
+
+function withLocalEditionMetadata(editions: AlbumEdition[]) {
+  return editions.map((edition) => {
+    const localEdition = paniniWorldCup2026Editions.find(
+      (item) => item.id === edition.id,
+    );
+
+    return {
+      ...edition,
+      isEnabled: edition.isEnabled ?? localEdition?.isEnabled ?? true,
+      marketLabel: localEdition?.marketLabel,
+      packTheme: localEdition?.packTheme,
+      availabilityNote: localEdition?.availabilityNote,
+    };
+  });
+}
 
 function getLocalSectionsForVariant(checklistVariantId: string) {
   const directSections = checklistSections.filter(

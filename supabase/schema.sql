@@ -36,9 +36,13 @@ create table if not exists public.album_editions (
   cover_variant text not null,
   product_name text not null,
   product_url text not null,
+  is_enabled boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.album_editions
+  add column if not exists is_enabled boolean not null default true;
 
 create table if not exists public.checklist_sections (
   id text primary key,
@@ -143,6 +147,8 @@ create trigger set_user_stickers_updated_at
 
 create index if not exists idx_album_editions_collection_country
   on public.album_editions (collection_id, country, language, cover_type, cover_variant);
+create index if not exists idx_album_editions_collection_enabled
+  on public.album_editions (collection_id, is_enabled, country);
 create index if not exists idx_album_editions_checklist_variant
   on public.album_editions (checklist_variant_id);
 create index if not exists idx_checklist_sections_variant_sort
