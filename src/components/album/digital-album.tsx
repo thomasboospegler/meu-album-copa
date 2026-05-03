@@ -1,8 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  CircleUserRound,
+  MapPin,
+  Shield,
+  Trophy,
+  UsersRound,
+} from "lucide-react";
 
 import { AlbumLoading, AlbumNotFound } from "@/components/album/empty-state";
 import { StickerQuantityControls } from "@/components/album/sticker-quantity-controls";
@@ -14,18 +24,23 @@ import { useLocale } from "@/lib/i18n";
 import { getDuplicateQuantity, hasSticker } from "@/lib/utils/progress";
 
 export function DigitalAlbum({ userAlbumId }: { userAlbumId: string }) {
-  const { ready, album, sections, stickers, userStickerMap, increment, decrement } =
+  const { ready, album, collection, edition, sections, stickers, userStickerMap, increment, decrement } =
     useAlbumData(userAlbumId);
   const { t } = useLocale();
-  const pages = useMemo(
+  const spreads = useMemo(
     () =>
-      Array.from(new Set(stickers.map((sticker) => sticker.pageNumber))).sort(
-        (a, b) => a - b,
+      buildAlbumSpreads(
+        sections,
+        collection?.totalPages ?? 112,
+        t.albumCover,
+        t.pageShort,
       ),
-    [stickers],
+    [collection?.totalPages, sections, t.albumCover, t.pageShort],
   );
-  const [pageIndex, setPageIndex] = useState(0);
-  const pageSpread = pages.slice(pageIndex, pageIndex + 2);
+  const [spreadIndex, setSpreadIndex] = useState(0);
+  const lastSpreadIndex = Math.max(spreads.length - 1, 0);
+  const visibleSpreadIndex = Math.min(spreadIndex, lastSpreadIndex);
+  const activeSpread = spreads[visibleSpreadIndex];
 
   if (!ready) return <AlbumLoading />;
   if (!album) return <AlbumNotFound />;
@@ -39,8 +54,8 @@ export function DigitalAlbum({ userAlbumId }: { userAlbumId: string }) {
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-5">
           <Button
             aria-label={t.previousPages}
-            disabled={pageIndex === 0}
-            onClick={() => setPageIndex((current) => Math.max(0, current - 2))}
+            disabled={visibleSpreadIndex === 0}
+            onClick={() => setSpreadIndex(Math.max(0, visibleSpreadIndex - 1))}
             type="button"
             variant="outline"
           >
@@ -52,15 +67,13 @@ export function DigitalAlbum({ userAlbumId }: { userAlbumId: string }) {
               {t.digitalAlbum}
             </p>
             <p className="text-sm text-muted-foreground">
-              {pageSpread.map((page) => `${t.pageShort} ${page}`).join(" · ")}
+              {activeSpread?.label ?? t.albumCover}
             </p>
           </div>
           <Button
             aria-label={t.nextPages}
-            disabled={pageIndex + 2 >= pages.length}
-            onClick={() =>
-              setPageIndex((current) => Math.min(Math.max(pages.length - 1, 0), current + 2))
-            }
+            disabled={visibleSpreadIndex >= lastSpreadIndex}
+            onClick={() => setSpreadIndex(Math.min(lastSpreadIndex, visibleSpreadIndex + 1))}
             type="button"
             variant="outline"
           >
@@ -70,21 +83,101 @@ export function DigitalAlbum({ userAlbumId }: { userAlbumId: string }) {
         </div>
 
         <div className="grid gap-4 p-4 pt-0 lg:grid-cols-2 lg:p-5 lg:pt-0">
-          {pageSpread.map((pageNumber) => (
-            <AlbumPage
-              decrement={decrement}
-              increment={increment}
-              key={pageNumber}
-              pageNumber={pageNumber}
-              sections={sections}
-              stickers={stickers.filter((sticker) => sticker.pageNumber === pageNumber)}
-              userStickerMap={userStickerMap}
+          {activeSpread?.kind === "cover" ? (
+            <AlbumCoverPage
+              editionName={edition?.productName ?? album.nickname}
+              totalPages={collection?.totalPages ?? 112}
+              totalStickers={collection?.totalStickers ?? stickers.length}
             />
-          ))}
+          ) : (
+            activeSpread?.pages.map((pageNumber) => (
+              <AlbumPage
+                decrement={decrement}
+                increment={increment}
+                key={pageNumber}
+                pageNumber={pageNumber}
+                sections={sections}
+                stickers={stickers.filter((sticker) => sticker.pageNumber === pageNumber)}
+                userStickerMap={userStickerMap}
+              />
+            ))
+          )}
         </div>
       </section>
     </main>
   );
+}
+
+type AlbumSpread = {
+  id: string;
+  kind: "cover" | "pages";
+  label: string;
+  pages: number[];
+};
+
+function buildAlbumSpreads(
+  sections: ReturnType<typeof useAlbumData>["sections"],
+  totalPages: number,
+  coverLabel: string,
+  pageLabel: string,
+): AlbumSpread[] {
+  const sortedSections = [...sections].sort((a, b) => a.pageStart - b.pageStart);
+  const spreads: AlbumSpread[] = [
+    { id: "cover", kind: "cover", label: coverLabel, pages: [] },
+  ];
+  let page = 1;
+
+  while (page <= totalPages) {
+    const section = sortedSections.find((item) => item.pageStart === page);
+
+    if (section) {
+      const sectionPages = makePageRange(section.pageStart, section.pageEnd);
+
+      if (section.sectionType === "team") {
+        spreads.push({
+          id: section.id,
+          kind: "pages",
+          label: sectionPages.map((item) => `${pageLabel} ${item}`).join(" · "),
+          pages: sectionPages,
+        });
+      } else {
+        for (let index = 0; index < sectionPages.length; index += 2) {
+          const pages = sectionPages.slice(index, index + 2);
+          spreads.push({
+            id: `${section.id}-${pages.join("-")}`,
+            kind: "pages",
+            label: pages.map((item) => `${pageLabel} ${item}`).join(" · "),
+            pages,
+          });
+        }
+      }
+
+      page = section.pageEnd + 1;
+      continue;
+    }
+
+    const nextSection = sortedSections.find((item) => item.pageStart > page);
+    const endPage = Math.min(nextSection?.pageStart ? nextSection.pageStart - 1 : totalPages, totalPages);
+    const emptyPages = makePageRange(page, endPage);
+
+    for (let index = 0; index < emptyPages.length; index += 2) {
+      const pages = emptyPages.slice(index, index + 2);
+      spreads.push({
+        id: `editorial-${pages.join("-")}`,
+        kind: "pages",
+        label: pages.map((item) => `${pageLabel} ${item}`).join(" · "),
+        pages,
+      });
+    }
+
+    page = endPage + 1;
+  }
+
+  return spreads;
+}
+
+function makePageRange(start: number, end: number) {
+  return Array.from({ length: Math.max(end - start + 1, 0) }, (_, index) => start + index);
 }
 
 function Header({ title, userAlbumId }: { title: string; userAlbumId: string }) {
@@ -99,6 +192,47 @@ function Header({ title, userAlbumId }: { title: string; userAlbumId: string }) 
       <Button asChild variant="outline">
         <Link href={`/albums/${userAlbumId}`}>{t.dashboard}</Link>
       </Button>
+    </div>
+  );
+}
+
+function AlbumCoverPage({
+  editionName,
+  totalPages,
+  totalStickers,
+}: {
+  editionName: string;
+  totalPages: number;
+  totalStickers: number;
+}) {
+  const { t } = useLocale();
+
+  return (
+    <div className="relative min-h-[42rem] overflow-hidden rounded-xl border border-white/15 bg-black shadow-2xl shadow-black/40 lg:col-span-2">
+      <Image
+        alt={t.albumCover}
+        className="absolute inset-0 size-full object-cover"
+        fill
+        priority
+        sizes="(min-width: 1024px) 72rem, 100vw"
+        src="/album-covers/bolivia-2026-cover.jpg"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+      <div className="relative flex h-full min-h-[42rem] flex-col justify-end gap-4 p-6 sm:p-8">
+        <Badge className="w-fit bg-yellow-300 text-black">{t.albumCover}</Badge>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-100">
+            FIFA World Cup 2026
+          </p>
+          <h2 className="mt-2 max-w-2xl text-4xl font-semibold tracking-normal text-white sm:text-5xl">
+            {editionName}
+          </h2>
+        </div>
+        <div className="flex flex-wrap gap-2 text-sm text-white/80">
+          <span className="rounded-full bg-white/12 px-3 py-1">{totalStickers} {t.stickers.toLowerCase()}</span>
+          <span className="rounded-full bg-white/12 px-3 py-1">{totalPages} {t.pages.toLowerCase()}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -136,7 +270,12 @@ function AlbumPage({
       </div>
 
       {stickers.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t.emptyPage}</p>
+        <div className="grid min-h-[25rem] place-items-center rounded-xl border border-dashed border-white/10 bg-black/15 p-6 text-center">
+          <div>
+            <p className="text-sm font-semibold text-foreground">{t.editorialPage}</p>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">{t.emptyPage}</p>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           {stickers.map((sticker) => {
@@ -148,7 +287,7 @@ function AlbumPage({
             return (
               <Card
                 aria-label={`${t.stickerSlot} ${sticker.displayCode}`}
-                className="sticker-card min-h-48 cursor-pointer rounded-xl p-2 transition hover:-translate-y-0.5 hover:border-yellow-300/80"
+                className="sticker-card min-h-52 cursor-pointer rounded-xl p-2 transition hover:-translate-y-0.5 hover:border-yellow-300/80"
                 data-collected={collected}
                 key={sticker.id}
                 onClick={() => increment(sticker.id)}
@@ -159,11 +298,7 @@ function AlbumPage({
                       <Badge>{sticker.displayCode}</Badge>
                       {collected ? <CheckCircle2 className="size-4 text-yellow-300" /> : null}
                     </div>
-                    <div className="mt-5 grid place-items-center">
-                      <div className="grid size-16 place-items-center rounded-full border-2 border-white/20 text-xs font-semibold text-muted-foreground">
-                        {collected ? quantity : "0"}
-                      </div>
-                    </div>
+                    <StickerSlotArt collected={collected} sticker={sticker} />
                   </div>
                   <div className="space-y-1">
                     <p className="line-clamp-2 text-sm font-semibold leading-snug">
@@ -185,6 +320,36 @@ function AlbumPage({
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function StickerSlotArt({
+  collected,
+  sticker,
+}: {
+  collected: boolean;
+  sticker: ReturnType<typeof useAlbumData>["stickers"][number];
+}) {
+  const Icon =
+    sticker.role === "Escudo"
+      ? Shield
+      : sticker.role === "Equipo"
+        ? UsersRound
+        : sticker.role === "Especial"
+          ? Trophy
+          : sticker.name.toLowerCase().includes("host")
+            ? MapPin
+            : CircleUserRound;
+
+  return (
+    <div
+      className="mt-4 grid aspect-[4/5] place-items-center overflow-hidden rounded-lg border border-white/10 bg-[radial-gradient(circle_at_30%_20%,rgba(255,220,90,0.28),transparent_34%),linear-gradient(135deg,rgba(74,222,128,0.18),rgba(59,130,246,0.12),rgba(239,68,68,0.10))]"
+      data-collected={collected}
+    >
+      <div className="grid size-14 place-items-center rounded-full border border-white/25 bg-black/20 text-white/80 shadow-inner shadow-black/40">
+        <Icon className={collected ? "size-7 text-yellow-200" : "size-7 text-white/45"} />
+      </div>
     </div>
   );
 }

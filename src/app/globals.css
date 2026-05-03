@@ -219,10 +219,22 @@
   }
 
   .sticker-card {
+    position: relative;
+    overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.12);
     background:
       linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
       rgba(5, 17, 13, 0.78);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  }
+
+  .sticker-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background-image: linear-gradient(90deg, #16a34a 0 25%, #facc15 25% 50%, #2563eb 50% 75%, #dc2626 75% 100%);
+    opacity: 0.45;
   }
 
   .sticker-card[data-collected="true"] {
@@ -230,6 +242,11 @@
     background:
       linear-gradient(160deg, rgba(34, 197, 94, 0.24), rgba(250, 204, 21, 0.12)),
       rgba(8, 35, 22, 0.9);
+    box-shadow: 0 22px 64px rgba(250, 204, 21, 0.12);
+  }
+
+  .sticker-card[data-collected="true"]::before {
+    opacity: 1;
   }
 
   .sticker-card[data-collected="false"] {

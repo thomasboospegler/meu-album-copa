@@ -165,7 +165,7 @@ export const collectionService = {
       const localSections = this.getSections(checklistVariantId);
 
       return supabaseSections && supabaseSections.length >= localSections.length
-        ? supabaseSections
+        ? supabaseSections.slice(0, localSections.length)
         : localSections;
     } catch {
       return this.getSections(checklistVariantId);
@@ -192,7 +192,7 @@ export const collectionService = {
       const localStickers = this.getStickers(checklistVariantId);
 
       return supabaseStickers && supabaseStickers.length >= localStickers.length
-        ? supabaseStickers
+        ? supabaseStickers.slice(0, localStickers.length)
         : localStickers;
     } catch {
       return this.getStickers(checklistVariantId);

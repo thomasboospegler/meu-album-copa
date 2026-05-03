@@ -11,7 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLocale } from "@/lib/i18n";
-import { stickerMatchesSearch } from "@/lib/utils/sticker-search";
+import {
+  normalizeStickerSearch,
+  stickerMatchesSearch,
+} from "@/lib/utils/sticker-search";
 import type { OfficialSticker } from "@/types/sticker";
 
 export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
@@ -38,17 +41,33 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
             sticker.displayCode,
             sticker.name,
             sticker.teamName,
+            sticker.countryCode,
+            sticker.role,
           ]),
       )
-      .slice(0, 8);
+      .slice(0, 40);
   }, [query, stickers]);
 
-  const selected = matches[0];
+  const exactMatch = useMemo(() => {
+    const normalized = normalizeStickerSearch(query);
+    if (!normalized) return undefined;
 
-  function addSticker(sticker: OfficialSticker) {
+    return matches.find((sticker) => {
+      const number = normalizeStickerSearch(String(sticker.officialNumber));
+      const code = normalizeStickerSearch(sticker.displayCode);
+      return normalized === number || normalized === code;
+    });
+  }, [matches, query]);
+
+  function addSticker(sticker: OfficialSticker, options: { clearQuery?: boolean } = {}) {
     increment(sticker.id);
     setRecent((current) => [sticker, ...current.filter((item) => item.id !== sticker.id)].slice(0, 6));
-    setQuery("");
+    if (options.clearQuery) setQuery("");
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }
+
+  function removeSticker(sticker: OfficialSticker) {
+    decrement(sticker.id);
     requestAnimationFrame(() => inputRef.current?.focus());
   }
 
@@ -73,8 +92,9 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
             className="h-14 text-lg"
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && selected) {
-                addSticker(selected);
+              if (event.key === "Enter") {
+                const sticker = exactMatch ?? (matches.length === 1 ? matches[0] : undefined);
+                if (sticker) addSticker(sticker, { clearQuery: true });
               }
             }}
             placeholder={t.quickAddPlaceholder}
@@ -82,42 +102,52 @@ export function QuickAdd({ userAlbumId }: { userAlbumId: string }) {
             value={query}
           />
 
-          {selected ? (
-            <div className="rounded-xl border border-yellow-300/50 bg-yellow-300/10 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <Badge>{selected.displayCode}</Badge>
-                  <p className="mt-2 text-lg font-semibold">{selected.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t.officialNumberShort} {selected.officialNumber} ·{" "}
-                    {selected.teamName ?? selected.stickerType}
-                  </p>
-                </div>
-                <StickerQuantityControls
-                  quantity={userStickerMap.get(selected.id)?.quantity ?? 0}
-                  onDecrement={() => decrement(selected.id)}
-                  onIncrement={() => addSticker(selected)}
-                />
+          {query && matches.length > 0 ? (
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+                <span>
+                  {matches.length} {t.stickers.toLowerCase()}
+                </span>
+                <span>{t.quantityShort}</span>
               </div>
+              {matches.map((sticker) => {
+                const quantity = userStickerMap.get(sticker.id)?.quantity ?? 0;
+                const isExact = exactMatch?.id === sticker.id;
+
+                return (
+                  <div
+                    className={
+                      isExact
+                        ? "rounded-xl border border-yellow-300/60 bg-yellow-300/10 p-3"
+                        : "cup-card rounded-xl p-3"
+                    }
+                    key={sticker.id}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <button
+                        className="min-w-0 flex-1 text-left"
+                        onClick={() => addSticker(sticker)}
+                        type="button"
+                      >
+                        <Badge>{sticker.displayCode}</Badge>
+                        <p className="mt-2 font-semibold leading-snug">{sticker.name}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {t.officialNumberShort} {sticker.officialNumber} ·{" "}
+                          {sticker.teamName ?? sticker.stickerType}
+                        </p>
+                      </button>
+                      <StickerQuantityControls
+                        quantity={quantity}
+                        onDecrement={() => removeSticker(sticker)}
+                        onIncrement={() => addSticker(sticker)}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : query ? (
             <p className="text-sm text-muted-foreground">{t.noStickerFound}</p>
-          ) : null}
-
-          {matches.length > 1 ? (
-            <div className="grid gap-2">
-              {matches.slice(1).map((sticker) => (
-                <button
-                  className="cup-card rounded-xl p-3 text-left hover:border-yellow-300"
-                  key={sticker.id}
-                  onClick={() => addSticker(sticker)}
-                  type="button"
-                >
-                  <span className="font-medium">{sticker.displayCode}</span>
-                  <span className="ml-2 text-muted-foreground">{sticker.name}</span>
-                </button>
-              ))}
-            </div>
           ) : null}
         </CardContent>
       </Card>

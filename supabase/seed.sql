@@ -554,3 +554,245 @@ on conflict (id) do update set
   role = excluded.role,
   page_number = excluded.page_number,
   sort_order = excluded.sort_order;
+
+-- Normalizacao Bolivia 2026 em 2026-05-03:
+-- Totais oficiais publicados pela Panini: 980 figurinhas, 112 paginas,
+-- 48 selecoes e 68 especiais. A ordem e as paginas das selecoes abaixo
+-- seguem as fotos do album fisico boliviano do usuario. Os nomes de atletas
+-- continuam genericos ate que o checklist oficial completo seja importado.
+with variants(checklist_variant_id) as (
+  values
+    ('fwc-2026-bo-es-sample'),
+    ('fwc-2026-br-pt-sample'),
+    ('fwc-2026-cl-es-sample'),
+    ('fwc-2026-intl-sample')
+)
+update public.official_stickers
+set
+  official_number = official_number + 30000,
+  sort_order = sort_order + 30000
+where checklist_variant_id in (select checklist_variant_id from variants);
+
+with variants(checklist_variant_id) as (
+  values
+    ('fwc-2026-bo-es-sample'),
+    ('fwc-2026-br-pt-sample'),
+    ('fwc-2026-cl-es-sample'),
+    ('fwc-2026-intl-sample')
+),
+team_seed(name, code, sort_order, page_start) as (
+  values
+    ('Mexico', 'MEX', 2, 8),
+    ('South Africa', 'RSA', 3, 10),
+    ('Korea Republic', 'KOR', 4, 12),
+    ('Czechia', 'CZE', 5, 14),
+    ('Canada', 'CAN', 6, 16),
+    ('Bosnia-Herzegovina', 'BIH', 7, 18),
+    ('Qatar', 'QAT', 8, 20),
+    ('Switzerland', 'SUI', 9, 22),
+    ('Brazil', 'BRA', 10, 24),
+    ('Morocco', 'MAR', 11, 26),
+    ('Haiti', 'HAI', 12, 28),
+    ('Scotland', 'SCO', 13, 30),
+    ('USA', 'USA', 14, 32),
+    ('Paraguay', 'PAR', 15, 34),
+    ('Australia', 'AUS', 16, 36),
+    ('Türkiye', 'TUR', 17, 38),
+    ('Germany', 'GER', 18, 40),
+    ('Curaçao', 'CUW', 19, 42),
+    ('Côte d''Ivoire', 'CIV', 20, 44),
+    ('Ecuador', 'ECU', 21, 46),
+    ('Netherlands', 'NED', 22, 48),
+    ('Japan', 'JPN', 23, 50),
+    ('Sweden', 'SWE', 24, 52),
+    ('Tunisia', 'TUN', 25, 54),
+    ('Belgium', 'BEL', 26, 58),
+    ('Egypt', 'EGY', 27, 60),
+    ('IR Iran', 'IRN', 28, 62),
+    ('New Zealand', 'NZL', 29, 64),
+    ('Spain', 'ESP', 30, 66),
+    ('Cabo Verde', 'CPV', 31, 68),
+    ('Saudi Arabia', 'KSA', 32, 70),
+    ('Uruguay', 'URU', 33, 72),
+    ('France', 'FRA', 34, 74),
+    ('Senegal', 'SEN', 35, 76),
+    ('Iraq', 'IRQ', 36, 78),
+    ('Norway', 'NOR', 37, 80),
+    ('Argentina', 'ARG', 38, 82),
+    ('Algeria', 'ALG', 39, 84),
+    ('Austria', 'AUT', 40, 86),
+    ('Jordan', 'JOR', 41, 88),
+    ('Portugal', 'POR', 42, 90),
+    ('Congo DR', 'COD', 43, 92),
+    ('Uzbekistan', 'UZB', 44, 94),
+    ('Colombia', 'COL', 45, 96),
+    ('England', 'ENG', 46, 98),
+    ('Croatia', 'CRO', 47, 100),
+    ('Ghana', 'GHA', 48, 102),
+    ('Panama', 'PAN', 49, 104)
+),
+section_seed(name, code, section_type, sort_order, page_start, page_end) as (
+  select
+    'FIFA World Cup'::text,
+    'FWC'::text,
+    'special'::text,
+    1,
+    1,
+    7
+  union all
+  select
+    team_seed.name,
+    team_seed.code,
+    'team',
+    team_seed.sort_order,
+    team_seed.page_start,
+    team_seed.page_start + 1
+  from team_seed
+),
+upsert_sections as (
+  insert into public.checklist_sections (
+    id,
+    checklist_variant_id,
+    name,
+    code,
+    section_type,
+    sort_order,
+    page_start,
+    page_end
+  )
+  select
+    variants.checklist_variant_id || '-' || lower(section_seed.code),
+    variants.checklist_variant_id,
+    section_seed.name,
+    section_seed.code,
+    section_seed.section_type,
+    section_seed.sort_order,
+    section_seed.page_start,
+    section_seed.page_end
+  from variants
+  cross join section_seed
+  on conflict (id) do update set
+    name = excluded.name,
+    code = excluded.code,
+    section_type = excluded.section_type,
+    sort_order = excluded.sort_order,
+    page_start = excluded.page_start,
+    page_end = excluded.page_end
+  returning id
+),
+generated_stickers as (
+  select
+    section_seed.code as section_code,
+    case
+      when section_seed.code = 'FWC' then slot.slot_index
+      else 21 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
+    end as official_number,
+    section_seed.code || ' ' || slot.slot_index::text as display_code,
+    section_seed.code || lpad(slot.slot_index::text, 2, '0') as compact_code,
+    case
+      when section_seed.code = 'FWC' then
+        case slot.slot_index
+          when 1 then 'Official Emblem'
+          when 2 then 'Official Mascots'
+          when 3 then 'Official Slogan'
+          when 4 then 'Official Match Ball'
+          when 5 then 'Official Ball'
+          when 6 then 'Host Country Emblem Canada'
+          when 7 then 'Host Country Emblem Mexico'
+          when 8 then 'Host Country Emblem USA'
+          else 'Host Cities ' || lpad((slot.slot_index - 8)::text, 2, '0')
+        end
+      when slot.slot_index = 1 then 'Escudo ' || section_seed.name
+      when slot.slot_index = 2 then 'Foto de equipo ' || section_seed.name
+      when slot.slot_index = 3 then 'Arquero ' || section_seed.name
+      when slot.slot_index in (4, 5) then 'Defensor ' || (slot.slot_index - 3)::text || ' ' || section_seed.name
+      when slot.slot_index = 6 then 'Lateral derecho ' || section_seed.name
+      when slot.slot_index = 7 then 'Lateral izquierdo ' || section_seed.name
+      when slot.slot_index between 8 and 12 then 'Mediocampista ' || (slot.slot_index - 7)::text || ' ' || section_seed.name
+      when slot.slot_index = 13 then 'Extremo derecho ' || section_seed.name
+      when slot.slot_index = 14 then 'Extremo izquierdo ' || section_seed.name
+      when slot.slot_index in (15, 16) then 'Delantero ' || (slot.slot_index - 14)::text || ' ' || section_seed.name
+      when slot.slot_index = 17 then 'Jugador destacado ' || section_seed.name
+      else 'Jugador ' || slot.slot_index::text || ' ' || section_seed.name
+    end as name,
+    case when section_seed.section_type = 'team' then section_seed.code else null end as country_code,
+    case when section_seed.section_type = 'team' then section_seed.name else null end as team_name,
+    case
+      when section_seed.code = 'FWC' then 'special'
+      when slot.slot_index = 1 then 'special'
+      else 'normal'
+    end as sticker_type,
+    case
+      when section_seed.code = 'FWC' then 'rare'
+      when slot.slot_index = 1 then 'foil'
+      else 'base'
+    end as rarity_type,
+    case
+      when section_seed.code = 'FWC' then 'Especial'
+      when slot.slot_index = 1 then 'Escudo'
+      when slot.slot_index = 2 then 'Equipo'
+      else 'Jugador'
+    end as role,
+    case
+      when section_seed.code = 'FWC' then
+        case
+          when slot.slot_index <= 4 then 1
+          when slot.slot_index <= 6 then 2
+          when slot.slot_index <= 8 then 3
+          when slot.slot_index <= 11 then 4
+          when slot.slot_index <= 14 then 5
+          when slot.slot_index <= 17 then 6
+          else 7
+        end
+      else section_seed.page_start + floor((slot.slot_index - 1)::numeric / 10)::integer
+    end as page_number,
+    case
+      when section_seed.code = 'FWC' then slot.slot_index
+      else 21 + ((section_seed.sort_order - 2) * 20) + slot.slot_index - 1
+    end as sort_order
+  from section_seed
+  cross join lateral generate_series(1, 20) as slot(slot_index)
+)
+insert into public.official_stickers (
+  id,
+  checklist_variant_id,
+  section_id,
+  official_number,
+  display_code,
+  name,
+  country_code,
+  team_name,
+  sticker_type,
+  rarity_type,
+  role,
+  page_number,
+  sort_order
+)
+select
+  variants.checklist_variant_id || '-' || generated_stickers.compact_code,
+  variants.checklist_variant_id,
+  variants.checklist_variant_id || '-' || lower(generated_stickers.section_code),
+  generated_stickers.official_number,
+  generated_stickers.display_code,
+  generated_stickers.name,
+  generated_stickers.country_code,
+  generated_stickers.team_name,
+  generated_stickers.sticker_type,
+  generated_stickers.rarity_type,
+  generated_stickers.role,
+  generated_stickers.page_number,
+  generated_stickers.sort_order
+from variants
+cross join generated_stickers
+on conflict (id) do update set
+  official_number = excluded.official_number,
+  section_id = excluded.section_id,
+  display_code = excluded.display_code,
+  name = excluded.name,
+  country_code = excluded.country_code,
+  team_name = excluded.team_name,
+  sticker_type = excluded.sticker_type,
+  rarity_type = excluded.rarity_type,
+  role = excluded.role,
+  page_number = excluded.page_number,
+  sort_order = excluded.sort_order;
