@@ -23,6 +23,9 @@ import { Card } from "@/components/ui/card";
 import { useLocale } from "@/lib/i18n";
 import { getDuplicateQuantity, hasSticker } from "@/lib/utils/progress";
 
+const officialPaniniAlbumCoverUrl =
+  "https://panini.com.br/media/catalog/product/c/a/capa_dura_-_de_p_.jpg?bg-color=255%2C255%2C255&canvas=960%3A897&dpr=1+1x&fit=bounds&height=897&optimize=medium&width=960";
+
 export function DigitalAlbum({ userAlbumId }: { userAlbumId: string }) {
   const { ready, album, collection, edition, sections, stickers, userStickerMap, increment, decrement } =
     useAlbumData(userAlbumId);
@@ -215,7 +218,8 @@ function AlbumCoverPage({
         fill
         priority
         sizes="(min-width: 1024px) 72rem, 100vw"
-        src="/album-covers/bolivia-2026-cover.jpg"
+        src={officialPaniniAlbumCoverUrl}
+        unoptimized
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
       <div className="relative flex h-full min-h-[42rem] flex-col justify-end gap-4 p-6 sm:p-8">
